@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,15 +25,25 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { cn } from "@/lib/utils";
 
-// This is a temporary solution to share state between pages.
-// In a real app, this would be managed by a global state manager (like Redux, Zustand) or fetched from a database.
 const updateStoredClients = (clients: Client[]) => {
     if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('all-clients', JSON.stringify(clients));
@@ -54,7 +64,9 @@ const getStoredClients = () => {
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>(getStoredClients);
   const [isAddClientModalOpen, setAddClientModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     updateStoredClients(clients);
@@ -62,6 +74,16 @@ export default function ClientsPage() {
 
   const handleAddClient = (newClient: Client) => {
     setClients((prevClients) => [newClient, ...prevClients]);
+  };
+  
+  const handleDeleteClient = (clientId: string) => {
+    const clientName = clients.find(c => c.id === clientId)?.name || "The client";
+    setClients((prevClients) => prevClients.filter((client) => client.id !== clientId));
+    toast({
+        title: "Client Deleted",
+        description: `${clientName} has been permanently removed.`,
+    });
+    setClientToDelete(null);
   };
 
   const formatCurrency = (amount: number) => {
@@ -91,6 +113,26 @@ export default function ClientsPage() {
         onOpenChange={setAddClientModalOpen}
         onClientAdded={handleAddClient}
       />
+      <AlertDialog open={!!clientToDelete} onOpenChange={() => setClientToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive"/> Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the profile for <strong>{clientToDelete?.name}</strong> and all of their associated payment history.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDeleteClient(clientToDelete!.id)} className={buttonVariants({ variant: "destructive" })}>
+                    <Trash2 className="mr-2 h-4 w-4"/>
+                    Yes, delete client
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
           <div>
@@ -164,7 +206,12 @@ export default function ClientsPage() {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem>Edit Profile</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onSelect={() => setClientToDelete(client)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4"/>
                             Delete Client
                           </DropdownMenuItem>
                         </DropdownMenuContent>
