@@ -34,7 +34,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import type { Client } from "@/lib/types"
+import type { Client, RecentActivity } from "@/lib/types"
+import { recentActivities as initialRecentActivities } from "@/lib/data"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -50,6 +51,18 @@ type AddClientFormProps = {
   onOpenChange: (isOpen: boolean) => void
   onClientAdded: (newClient: Client) => void
 }
+
+const getStoredRecentActivities = (): RecentActivity[] => {
+    if (typeof window === 'undefined') return initialRecentActivities;
+    const stored = sessionStorage.getItem('recent-activities');
+    return stored ? JSON.parse(stored) : initialRecentActivities;
+}
+
+const updateStoredRecentActivities = (activities: RecentActivity[]) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
+    }
+};
 
 export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -86,6 +99,17 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
         remainingBalance: values.amountBorrowed,
         status: 'Active',
     }
+    
+    const newActivity: RecentActivity = {
+        id: `ra${Date.now()}`,
+        type: 'new_client',
+        clientName: newClient.name,
+        date: new Date().toISOString(),
+        amount: newClient.originalLoanAmount,
+    };
+    const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+    updateStoredRecentActivities(updatedActivities);
+
 
     // In a real app, you'd save this to Firebase or your backend.
     console.log("New client created:", newClient)

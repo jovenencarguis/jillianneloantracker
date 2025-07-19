@@ -36,7 +36,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import type { Client, Payment } from "@/lib/types"
+import type { Client, Payment, RecentActivity } from "@/lib/types"
+import { recentActivities as initialRecentActivities } from "@/lib/data"
+
 
 const formSchema = z.object({
   paymentDate: z.date({ required_error: "A payment date is required." }),
@@ -55,6 +57,18 @@ type AddPaymentFormProps = {
   onPaymentAdded: (updatedClient: Client) => void
 }
 
+const getStoredRecentActivities = (): RecentActivity[] => {
+    if (typeof window === 'undefined') return initialRecentActivities;
+    const stored = sessionStorage.getItem('recent-activities');
+    return stored ? JSON.parse(stored) : initialRecentActivities;
+}
+
+const updateStoredRecentActivities = (activities: RecentActivity[]) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
+    }
+};
+
 export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }: AddPaymentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
@@ -70,7 +84,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     defaultValues: {
       paymentDate: new Date(),
       capitalPaid: 0,
-      interestPaid: calculateInterest(client.remainingBalance),
+      interestPaid: 0,
       notes: "",
     },
   })
@@ -101,13 +115,24 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     }
     
     const newRemainingBalance = client.remainingBalance - values.capitalPaid;
+    const isPaidOff = newRemainingBalance <= 0;
 
     const updatedClient: Client = {
       ...client,
       remainingBalance: newRemainingBalance,
       payments: [...client.payments, newPayment],
-      status: newRemainingBalance <= 0 ? 'Paid Off' : 'Active'
+      status: isPaidOff ? 'Paid Off' : 'Active'
     }
+
+    const newActivity: RecentActivity = {
+        id: `ra${Date.now()}`,
+        type: isPaidOff ? 'paid_off' : 'payment',
+        clientName: client.name,
+        date: new Date().toISOString(),
+        amount: newPayment.totalPaid,
+    };
+    const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+    updateStoredRecentActivities(updatedActivities);
 
     onPaymentAdded(updatedClient);
 
