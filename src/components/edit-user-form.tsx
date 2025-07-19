@@ -40,6 +40,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   username: z.string().min(2, { message: "Username must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   role: z.enum(["admin", "user"], { required_error: "Role is required."}),
 })
 
@@ -52,6 +53,7 @@ type EditUserFormProps = {
 
 export function EditUserForm({ isOpen, onOpenChange, user, onUserUpdated }: EditUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,6 +62,7 @@ export function EditUserForm({ isOpen, onOpenChange, user, onUserUpdated }: Edit
       name: user.name,
       username: user.username,
       email: user.email,
+      password: user.password || "",
       role: user.role,
     },
   })
@@ -70,6 +73,7 @@ export function EditUserForm({ isOpen, onOpenChange, user, onUserUpdated }: Edit
             name: user.name,
             username: user.username,
             email: user.email,
+            password: user.password || "",
             role: user.role,
         })
     }
@@ -85,6 +89,7 @@ export function EditUserForm({ isOpen, onOpenChange, user, onUserUpdated }: Edit
         name: values.name,
         username: values.username,
         email: values.email,
+        password: values.password,
         role: values.role,
     }
     
@@ -140,6 +145,36 @@ export function EditUserForm({ isOpen, onOpenChange, user, onUserUpdated }: Edit
                     <FormLabel>Username</FormLabel>
                     <FormControl>
                         <Input placeholder="johndoe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                        <div className="relative">
+                        <Input 
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="********" 
+                            {...field} 
+                            className="pr-10"
+                            />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                            >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+                            </Button>
+                        </div>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
