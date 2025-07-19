@@ -35,11 +35,16 @@ const getStoredUsers = (): User[] => {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
   const router = useRouter();
 
   const refetchUsers = useCallback(() => {
-    setAllUsers(getStoredUsers());
+    // This function can be called to ensure the latest users are loaded into session storage if needed,
+    // but the primary source of truth for login will be direct from storage.
+    const users = getStoredUsers();
+    // Ensure initial users are in storage if nothing else is.
+    if (!sessionStorage.getItem('all-users')) {
+        sessionStorage.setItem('all-users', JSON.stringify(users));
+    }
   }, []);
 
   useEffect(() => {
@@ -59,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refetchUsers]);
 
   const login = (username: string, password?: string): boolean => {
-    // Correctly load the users before attempting to find one.
+    // Always get the most up-to-date user list from session storage.
     const usersToSearch = getStoredUsers(); 
     const foundUser = usersToSearch.find(
       (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
