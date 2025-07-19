@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Friendly LoanBuddy",
-  description: "A simple and friendly money lending tracker.",
+  description: "Your Smart Money Lending Companion",
 };
 
 export default function RootLayout({
