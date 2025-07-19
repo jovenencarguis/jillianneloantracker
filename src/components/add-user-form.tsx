@@ -37,6 +37,7 @@ import type { User } from "@/lib/types"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  username: z.string().min(2, { message: "Username must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters."}),
   role: z.enum(["admin", "user"], { required_error: "Role is required."}),
@@ -57,6 +58,7 @@ export function AddUserForm({ isOpen, onOpenChange, onUserAdded }: AddUserFormPr
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      username: "",
       email: "",
       password: "",
       role: "user",
@@ -71,11 +73,13 @@ export function AddUserForm({ isOpen, onOpenChange, onUserAdded }: AddUserFormPr
     const newUser: User = {
         id: `u${Date.now()}`,
         name: values.name,
+        username: values.username,
         email: values.email,
+        password: values.password, // In a real app, this should be hashed.
         role: values.role,
     }
     
-    // In a real app, you'd save this to Firebase or your backend.
+    // In a real app, you'd save this to a database.
     console.log("New user created:", newUser)
     onUserAdded(newUser)
 
@@ -122,6 +126,19 @@ export function AddUserForm({ isOpen, onOpenChange, onUserAdded }: AddUserFormPr
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="user@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="johndoe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

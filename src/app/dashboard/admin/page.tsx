@@ -42,22 +42,54 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
-import { users as mockUsers } from "@/lib/data";
+import { users as initialUsers } from "@/lib/data";
 import { AddUserForm } from "@/components/add-user-form";
 
+const updateStoredUsers = (users: User[]) => {
+    if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('all-users', JSON.stringify(users));
+    }
+};
+
+const getStoredUsers = (): User[] => {
+    if (typeof window !== 'undefined') {
+        const storedUsers = window.sessionStorage.getItem('all-users');
+        if (storedUsers) {
+            try {
+                return JSON.parse(storedUsers);
+            } catch (e) {
+                console.error("Failed to parse users from sessionStorage", e);
+                return initialUsers;
+            }
+        }
+    }
+    return initialUsers;
+};
+
 export default function AdminPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refetchUsers } = useAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setUsers(getStoredUsers());
+  }, []);
+  
+  useEffect(() => {
     if (!loading && user?.role !== "admin") {
       router.push("/dashboard");
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    if(users.length > 0){
+        updateStoredUsers(users);
+        refetchUsers?.();
+    }
+  }, [users, refetchUsers]);
 
   const handleRoleChange = (userId: string, newRole: "admin" | "user") => {
     const targetUser = users.find((u) => u.id === userId);

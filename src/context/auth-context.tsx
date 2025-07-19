@@ -1,8 +1,9 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { User } from '@/lib/types';
-import { users as mockUsers } from '@/lib/data';
+import { users as initialUsers } from '@/lib/data';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -10,17 +11,40 @@ interface AuthContextType {
   login: (username: string, password?: string) => boolean;
   logout: () => void;
   loading: boolean;
+  refetchUsers?: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getStoredUsers = (): User[] => {
+    if (typeof window === 'undefined') return initialUsers;
+    const storedUsers = sessionStorage.getItem('all-users');
+    if (storedUsers) {
+        try {
+            const parsed = JSON.parse(storedUsers);
+            // Quick validation to ensure it's an array and not empty
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+        } catch (e) {
+            console.error("Failed to parse users from sessionStorage", e);
+            return initialUsers;
+        }
+    }
+    return initialUsers;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
   const router = useRouter();
 
+  const refetchUsers = useCallback(() => {
+    setAllUsers(getStoredUsers());
+  }, []);
+
   useEffect(() => {
-    // Check for a logged-in user in localStorage to persist session
+    refetchUsers();
+
     try {
       const storedUser = localStorage.getItem('loadbuddy-user');
       if (storedUser) {
@@ -32,13 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refetchUsers]);
 
   const login = (username: string, password?: string): boolean => {
-    // In a real app, password should be hashed and compared on the server.
-    // For this mock app, we're just finding the user by username.
-    // Password can be any string.
-    const foundUser = mockUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
+    const foundUser = allUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
     if (foundUser) {
       const { password: _, ...userToStore } = foundUser;
       setUser(userToStore);
@@ -54,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const value = { user, login, logout, loading };
+  const value = { user, login, logout, loading, refetchUsers };
 
   return (
     <AuthContext.Provider value={value}>
