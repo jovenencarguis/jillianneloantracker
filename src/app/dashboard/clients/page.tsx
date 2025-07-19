@@ -177,11 +177,9 @@ export default function ClientsPage() {
               Manage your borrowers and their loans.
             </p>
           </div>
-          {user?.role === 'admin' && (
-            <Button onClick={() => setAddClientModalOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
-            </Button>
-          )}
+          <Button onClick={() => setAddClientModalOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
+          </Button>
         </div>
         <Card>
           <CardHeader>
