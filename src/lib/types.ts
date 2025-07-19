@@ -22,3 +22,21 @@ export interface Client {
   payments: Payment[];
   remainingBalance: number;
 }
+
+export interface RecentActivity {
+  id: string;
+  type: 'payment' | 'new_client' | 'paid_off';
+  clientName: string;
+  date: string;
+  amount?: number;
+}
+
+export interface UpcomingPayment {
+    id: string;
+    clientName: string;
+    dueDate: string;
+    amount: number;
+    isOverdue: boolean;
+}
+
+    
