@@ -9,10 +9,13 @@ export const clients: Client[] = [
   {
     id: 'c1',
     name: 'Jillianne Doe',
+    idNumber: 'AB123456',
+    mobile: '+853-1111-1111',
     originalLoanAmount: 10000,
     interestRate: 120, // 10% monthly = 120% annually
     loanDate: '2023-01-15',
     remainingBalance: 3000,
+    status: 'Active',
     payments: [
       { id: 'p1', date: '2023-02-15', capitalPaid: 5000, interestPaid: 1000, totalPaid: 6000 },
       { id: 'p2', date: '2023-03-15', capitalPaid: 2000, interestPaid: 500, totalPaid: 2500 },
@@ -21,19 +24,26 @@ export const clients: Client[] = [
   {
     id: 'c2',
     name: 'John Smith',
+    idNumber: 'CD789012',
+    mobile: '+853-2222-2222',
+    passportNumber: 'P12345678',
     originalLoanAmount: 50000,
     interestRate: 120,
     loanDate: '2023-03-01',
     remainingBalance: 50000,
+    status: 'Overdue',
     payments: [],
   },
   {
     id: 'c3',
     name: 'Peter Jones',
+    idNumber: 'EF345678',
+    mobile: '+853-3333-3333',
     originalLoanAmount: 2500,
     interestRate: 120,
     loanDate: '2023-04-10',
     remainingBalance: 1000,
+    status: 'Active',
     payments: [
       { id: 'p3', date: '2023-05-10', capitalPaid: 1500, interestPaid: 250, totalPaid: 1750 },
     ],
@@ -41,10 +51,13 @@ export const clients: Client[] = [
   {
     id: 'c4',
     name: 'Sarah Miller',
+    idNumber: 'GH901234',
+    mobile: '+853-4444-4444',
     originalLoanAmount: 100000,
     interestRate: 120,
     loanDate: '2023-02-20',
     remainingBalance: 0,
+    status: 'Paid Off',
     payments: [
       { id: 'p4', date: '2023-03-20', capitalPaid: 30000, interestPaid: 10000, totalPaid: 40000 },
       { id: 'p5', date: '2024-05-20', capitalPaid: 70000, interestPaid: 1000, totalPaid: 71000 }

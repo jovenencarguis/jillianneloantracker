@@ -76,16 +76,15 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     const newClient: Client = {
         id: `c${Date.now()}`,
         name: values.name,
-        // In a real app, you would probably store these fields separately
-        // For now, we'll keep the Client type simpler.
-        // idNumber: values.idNumber,
-        // passportNumber: values.passportNumber,
-        // mobile: values.mobile,
+        idNumber: values.idNumber,
+        passportNumber: values.passportNumber,
+        mobile: values.mobile,
         originalLoanAmount: values.amountBorrowed,
         interestRate: 120, // 10% monthly
         loanDate: values.borrowedDate.toISOString(),
         payments: [],
         remainingBalance: values.amountBorrowed,
+        status: 'Active',
     }
 
     // In a real app, you'd save this to Firebase or your backend.

@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
+import { cn } from "@/lib/utils";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>(initialClients);
@@ -48,15 +49,16 @@ export default function ClientsPage() {
     }).format(amount);
   };
   
-  const getStatus = (client: Client) => {
-    if (client.remainingBalance <= 0) {
-      return <Badge variant="outline" className="text-accent-foreground border-accent">Paid Off</Badge>;
+  const getStatusBadge = (status: Client['status']) => {
+    switch (status) {
+        case 'Paid Off':
+            return <Badge variant="outline" className="text-accent-foreground border-accent">Paid Off</Badge>;
+        case 'Overdue':
+            return <Badge variant="destructive">Overdue</Badge>;
+        case 'Active':
+        default:
+            return <Badge variant="secondary">Active</Badge>;
     }
-    // This is a mock logic. A real app would compare due dates.
-    if (client.id === 'c2') {
-        return <Badge variant="destructive">Overdue</Badge>
-    }
-    return <Badge variant="secondary">Active</Badge>;
   }
 
   return (
@@ -115,7 +117,7 @@ export default function ClientsPage() {
                       {formatCurrency(client.remainingBalance)}
                     </TableCell>
                     <TableCell>
-                      {getStatus(client)}
+                      {getStatusBadge(client.status)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

@@ -16,11 +16,15 @@ export interface Payment {
 export interface Client {
   id: string;
   name: string;
+  idNumber: string;
+  passportNumber?: string;
+  mobile: string;
   originalLoanAmount: number;
   interestRate: number; // Annual rate as a percentage, e.g., 10 for 10%
   loanDate: string;
   payments: Payment[];
   remainingBalance: number;
+  status: 'Active' | 'Overdue' | 'Paid Off';
 }
 
 export interface RecentActivity {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { notFound, useParams } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useParams, notFound } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -26,6 +27,8 @@ import {
   PlusCircle,
   Hash,
   BadgePercent,
+  FileText,
+  Smartphone
 } from "lucide-react";
 import type { Client } from "@/lib/types";
 import { clients as mockClients } from "@/lib/data";
@@ -36,20 +39,39 @@ export default function ClientDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // In a real app, you would fetch this from a server/database.
+    // For now, we simulate a fetch from our mock data.
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const foundClient = mockClients.find((c) => c.id === id);
+    
     if (foundClient) {
       setClient(foundClient);
     }
-    setIsLoading(false);
+    // Simulate network delay
+    setTimeout(() => {
+        setIsLoading(false);
+    }, 500);
+
   }, [params.id]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading client details...</div>;
   }
 
   if (!client) {
     notFound();
+  }
+  
+  const getStatusBadge = (status: Client['status']) => {
+    switch (status) {
+        case 'Paid Off':
+            return <Badge variant="outline" className="text-accent-foreground border-accent">Paid Off</Badge>;
+        case 'Overdue':
+            return <Badge variant="destructive">Overdue</Badge>;
+        case 'Active':
+        default:
+            return <Badge variant="secondary">Active</Badge>;
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -65,9 +87,12 @@ export default function ClientDetailPage() {
     <div className="space-y-6 pt-6 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline">
-            {client.name}
-          </h2>
+          <div className="flex items-center gap-4">
+             <h2 className="text-3xl font-bold tracking-tight font-headline">
+                {client.name}
+             </h2>
+             {getStatusBadge(client.status)}
+          </div>
           <p className="text-muted-foreground">
             Detailed loan information and payment history.
           </p>
@@ -88,9 +113,19 @@ export default function ClientDetailPage() {
               <User className="mr-3 h-5 w-5 text-muted-foreground" />
               <span>{client.name}</span>
             </div>
-            <div className="flex items-center">
+             <div className="flex items-center">
               <Hash className="mr-3 h-5 w-5 text-muted-foreground" />
-              <span>Client ID: {client.id}</span>
+              <span>ID: {client.idNumber}</span>
+            </div>
+            {client.passportNumber && (
+                <div className="flex items-center">
+                    <FileText className="mr-3 h-5 w-5 text-muted-foreground" />
+                    <span>Passport: {client.passportNumber}</span>
+                </div>
+            )}
+             <div className="flex items-center">
+              <Smartphone className="mr-3 h-5 w-5 text-muted-foreground" />
+              <span>{client.mobile}</span>
             </div>
              <div className="flex items-center">
               <BadgePercent className="mr-3 h-5 w-5 text-muted-foreground" />
