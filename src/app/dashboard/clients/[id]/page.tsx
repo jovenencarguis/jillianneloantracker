@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import {
   User,
   Calendar,
@@ -31,12 +30,14 @@ import {
 import type { Client } from "@/lib/types";
 import { clients as mockClients } from "@/lib/data";
 
-export default function ClientDetailPage({ params }: { params: { id: string } }) {
+export default function ClientDetailPage() {
+  const params = useParams();
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const foundClient = mockClients.find((c) => c.id === params.id);
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const foundClient = mockClients.find((c) => c.id === id);
     if (foundClient) {
       setClient(foundClient);
     }
