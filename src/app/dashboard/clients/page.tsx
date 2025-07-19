@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, PlusCircle, Trash2, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, AlertTriangle, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
+import { EditClientForm } from "@/components/edit-client-form";
 import { cn } from "@/lib/utils";
 
 const updateStoredClients = (clients: Client[]) => {
@@ -70,6 +71,8 @@ const getStoredClients = () => {
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isAddClientModalOpen, setAddClientModalOpen] = useState(false);
+  const [isEditClientModalOpen, setEditClientModalOpen] = useState(false);
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const router = useRouter();
   const { toast } = useToast();
@@ -87,6 +90,11 @@ export default function ClientsPage() {
   const handleAddClient = (newClient: Client) => {
     setClients((prevClients) => [newClient, ...prevClients]);
   };
+
+  const handleUpdateClient = (updatedClient: Client) => {
+    setClients((prevClients) => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
+    setClientToEdit(null);
+  };
   
   const handleDeleteClient = (clientId: string) => {
     const clientName = clients.find(c => c.id === clientId)?.name || "The client";
@@ -97,6 +105,11 @@ export default function ClientsPage() {
     });
     setClientToDelete(null);
   };
+
+  const openEditModal = (client: Client) => {
+    setClientToEdit(client);
+    setEditClientModalOpen(true);
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -125,6 +138,14 @@ export default function ClientsPage() {
         onOpenChange={setAddClientModalOpen}
         onClientAdded={handleAddClient}
       />
+      {clientToEdit && (
+        <EditClientForm
+            isOpen={isEditClientModalOpen}
+            onOpenChange={setEditClientModalOpen}
+            client={clientToEdit}
+            onClientUpdated={handleUpdateClient}
+        />
+      )}
       <AlertDialog open={!!clientToDelete} onOpenChange={() => setClientToDelete(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -217,7 +238,10 @@ export default function ClientsPage() {
                           >
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Edit Profile</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEditModal(client)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Profile
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive focus:bg-destructive/10"
