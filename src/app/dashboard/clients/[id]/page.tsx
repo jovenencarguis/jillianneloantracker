@@ -29,13 +29,15 @@ import {
   Hash,
   BadgePercent,
   FileText,
-  Smartphone
+  Smartphone,
+  Briefcase,
+  CalendarClock,
 } from "lucide-react";
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddPaymentForm } from "@/components/add-payment-form";
 
-const getClients = () => {
+const getClients = (): Client[] => {
     if (typeof window !== 'undefined') {
         const storedClients = window.sessionStorage.getItem('all-clients');
         if (storedClients) {
@@ -168,6 +170,18 @@ export default function ClientDetailPage() {
                 <Smartphone className="mr-3 h-5 w-5 text-muted-foreground" />
                 <span>{client.mobile}</span>
               </div>
+              {client.occupation && (
+                  <div className="flex items-center">
+                      <Briefcase className="mr-3 h-5 w-5 text-muted-foreground" />
+                      <span>{client.occupation}</span>
+                  </div>
+              )}
+              {client.yearsWorking && (
+                  <div className="flex items-center">
+                      <CalendarClock className="mr-3 h-5 w-5 text-muted-foreground" />
+                      <span>{client.yearsWorking} years working</span>
+                  </div>
+              )}
                <div className="flex items-center">
                 <BadgePercent className="mr-3 h-5 w-5 text-muted-foreground" />
                 <span>Interest Rate: {client.interestRate / 12}% / month</span>

@@ -30,6 +30,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -37,11 +44,22 @@ import { useToast } from "@/hooks/use-toast"
 import type { Client, RecentActivity } from "@/lib/types"
 import { recentActivities as initialRecentActivities } from "@/lib/data"
 
+const occupations = [
+  "Programmer",
+  "Public Assistant",
+  "Supervisor",
+  "Room Attendant",
+  "Security Guard",
+  "Other",
+];
+
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   idNumber: z.string().min(1, { message: "ID number is required." }),
   passportNumber: z.string().optional(),
   mobile: z.string().min(1, { message: "Mobile number is required." }),
+  occupation: z.string({ required_error: "Occupation is required." }),
+  yearsWorking: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   amountBorrowed: z.coerce.number().min(1, { message: "Amount must be greater than 0." }),
   borrowedDate: z.date({ required_error: "A borrowing date is required." }),
 })
@@ -75,6 +93,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
       idNumber: "",
       passportNumber: "",
       mobile: "",
+      yearsWorking: 1,
       amountBorrowed: 0,
       borrowedDate: new Date(),
     },
@@ -92,6 +111,8 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
         idNumber: values.idNumber,
         passportNumber: values.passportNumber,
         mobile: values.mobile,
+        occupation: values.occupation,
+        yearsWorking: values.yearsWorking,
         originalLoanAmount: values.amountBorrowed,
         interestRate: 120, // 10% monthly
         loanDate: values.borrowedDate.toISOString(),
@@ -192,6 +213,41 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                   </FormItem>
                 )}
               />
+               <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="occupation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Occupation</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an occupation" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {occupations.map(occ => <SelectItem key={occ} value={occ}>{occ}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="yearsWorking"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Years Working</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}

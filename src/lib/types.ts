@@ -19,6 +19,8 @@ export interface Client {
   idNumber: string;
   passportNumber?: string;
   mobile: string;
+  occupation?: string;
+  yearsWorking?: number;
   originalLoanAmount: number;
   interestRate: number; // Annual rate as a percentage, e.g., 10 for 10%
   loanDate: string;
