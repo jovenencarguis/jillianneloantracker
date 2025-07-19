@@ -11,11 +11,11 @@ export default function SplashPage() {
   useEffect(() => {
     const redirectTimer = setTimeout(() => {
       setIsFadingOut(true);
-    }, 3500); // Wait 3.5s before starting fade out
+    }, 2500); // Wait 2.5s before starting fade out
 
     const pushTimer = setTimeout(() => {
       router.push('/login');
-    }, 4000); // Push to login after 4s (allowing 0.5s for fade-out)
+    }, 3000); // Push to login after 3s (allowing 0.5s for fade-out)
 
     return () => {
       clearTimeout(redirectTimer);

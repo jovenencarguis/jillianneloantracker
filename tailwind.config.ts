@@ -91,8 +91,8 @@ export default {
           }
         },
         "progress-bar": {
-            "0%": { width: "0%" },
-            "100%": { width: "100%" }
+            "0%": { transform: "translateX(-100%)" },
+            "100%": { transform: "translateX(0%)" }
         }
       },
       animation: {
@@ -100,7 +100,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in-down": "fade-in-down 0.5s ease-out forwards",
         "fade-in-up": "fade-in-up 0.5s ease-out 0.2s forwards",
-        "progress-bar": "progress-bar 3.5s ease-out forwards"
+        "progress-bar": "progress-bar 2.5s ease-out forwards"
       },
     },
   },
