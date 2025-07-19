@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -55,7 +56,7 @@ const occupations = [
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  idNumber: z.string().min(1, { message: "ID number is required." }),
+  idNumber: z.string().min(1, { message: "ID is required." }),
   passportNumber: z.string().optional(),
   mobile: z.string().min(1, { message: "Mobile number is required." }),
   occupation: z.string({ required_error: "Occupation is required." }),
@@ -178,7 +179,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                     name="idNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ID Number</FormLabel>
+                        <FormLabel>ID</FormLabel>
                         <FormControl>
                           <Input placeholder="AB123456" {...field} />
                         </FormControl>
