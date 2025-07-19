@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, refetchUsers } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Ensure the latest user list is available for login
+    refetchUsers?.();
+  }, [refetchUsers]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
