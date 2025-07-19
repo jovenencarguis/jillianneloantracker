@@ -56,7 +56,6 @@ const occupations = [
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  idNumber: z.string().min(1, { message: "ID is required." }),
   passportNumber: z.string().optional(),
   mobile: z.string().min(1, { message: "Mobile number is required." }),
   occupation: z.string({ required_error: "Occupation is required." }),
@@ -91,7 +90,6 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      idNumber: "",
       passportNumber: "",
       mobile: "",
       yearsWorking: 1,
@@ -109,7 +107,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     const newClient: Client = {
         id: `c${Date.now()}`,
         name: values.name,
-        idNumber: values.idNumber,
+        idNumber: `ID-${Date.now()}`,
         passportNumber: values.passportNumber,
         mobile: values.mobile,
         occupation: values.occupation,
@@ -173,34 +171,19 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="idNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="AB123456" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="passportNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Passport No. (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="P987654321" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-              </div>
+              <FormField
+                control={form.control}
+                name="passportNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Passport No. (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="P987654321" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="mobile"
