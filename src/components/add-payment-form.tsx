@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -59,15 +59,33 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
+  const calculateInterest = (balance: number) => {
+    // Interest is 10% per month
+    const monthlyInterestRate = (client.interestRate / 12) / 100;
+    return parseFloat((balance * monthlyInterestRate).toFixed(2));
+  };
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       paymentDate: new Date(),
       capitalPaid: 0,
-      interestPaid: 0,
+      interestPaid: calculateInterest(client.remainingBalance),
       notes: "",
     },
   })
+
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form with default values when modal opens, especially the calculated interest
+      form.reset({
+        paymentDate: new Date(),
+        capitalPaid: 0,
+        interestPaid: calculateInterest(client.remainingBalance),
+        notes: "",
+      });
+    }
+  }, [isOpen, client, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
@@ -101,7 +119,6 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     
     setIsSubmitting(false)
     onOpenChange(false)
-    form.reset()
   }
 
   return (
