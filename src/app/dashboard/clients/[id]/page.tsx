@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, notFound, useRouter } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ import {
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddPaymentForm } from "@/components/add-payment-form";
+import { useAuth } from "@/context/auth-context";
 
 const getClients = (): Client[] => {
     if (typeof window !== 'undefined') {
@@ -61,6 +62,7 @@ const updateStoredClients = (clients: Client[]) => {
 
 export default function ClientDetailPage() {
   const params = useParams();
+  const { user } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddPaymentModalOpen, setAddPaymentModalOpen] = useState(false);
@@ -140,9 +142,11 @@ export default function ClientDetailPage() {
               Detailed loan information and payment history.
             </p>
           </div>
-          <Button onClick={() => setAddPaymentModalOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Payment
-          </Button>
+          {user?.role === 'admin' && (
+            <Button onClick={() => setAddPaymentModalOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Payment
+            </Button>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">

@@ -44,7 +44,6 @@ import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 
 const updateStoredClients = (clients: Client[]) => {
@@ -178,9 +177,11 @@ export default function ClientsPage() {
               Manage your borrowers and their loans.
             </p>
           </div>
-          <Button onClick={() => setAddClientModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
-          </Button>
+          {user?.role === 'admin' && (
+            <Button onClick={() => setAddClientModalOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
+            </Button>
+          )}
         </div>
         <Card>
           <CardHeader>
@@ -240,18 +241,22 @@ export default function ClientsPage() {
                           >
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => openEditModal(client)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                            onSelect={() => setClientToDelete(client)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Delete Client
-                          </DropdownMenuItem>
+                          {user?.role === 'admin' && (
+                            <>
+                              <DropdownMenuItem onSelect={() => openEditModal(client)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                onSelect={() => setClientToDelete(client)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete Client
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { PlusCircle, ShieldCheck, UserCog, Trash2, AlertTriangle, UserPlus, MoreVertical, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -70,7 +69,6 @@ const getStoredUsers = (): User[] => {
 
 export default function AdminPage() {
   const { user, loading, logout, refetchUsers } = useAuth();
-  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
@@ -84,9 +82,10 @@ export default function AdminPage() {
   
   useEffect(() => {
     if (!loading && user?.role !== "admin") {
-      router.push("/dashboard");
+      // User will be redirected by the layout if not admin, but this is a failsafe
+      // For this simple app, we can just show a message. A redirect could cause a loop if not handled carefully.
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
   
   useEffect(() => {
     if(users.length > 0){
@@ -238,7 +237,6 @@ export default function AdminPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Username</TableHead>
-                  <TableHead>Full Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>
@@ -250,7 +248,6 @@ export default function AdminPage() {
                 {users.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.username}</TableCell>
-                    <TableCell>{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
                       {u.role === "admin" ? (
