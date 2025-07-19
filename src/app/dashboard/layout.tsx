@@ -6,7 +6,7 @@ import { useAuth } from "@/context/auth-context"
 import { Sidebar } from "@/components/sidebar"
 import { UserNav } from "@/components/user-nav"
 import { Landmark, Users, Shield, LayoutDashboard, Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -58,6 +58,8 @@ export default function DashboardLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
+              <SheetTitle className="sr-only">Menu</SheetTitle>
+              <SheetDescription className="sr-only">Main navigation menu</SheetDescription>
               <nav className="grid gap-6 text-lg font-medium">
                 <Link
                   href="/dashboard"
