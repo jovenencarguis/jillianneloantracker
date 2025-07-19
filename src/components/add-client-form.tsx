@@ -107,7 +107,6 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     const newClient: Client = {
         id: `c${Date.now()}`,
         name: values.name,
-        idNumber: `ID-${Date.now()}`,
         passportNumber: values.passportNumber,
         mobile: values.mobile,
         occupation: values.occupation,

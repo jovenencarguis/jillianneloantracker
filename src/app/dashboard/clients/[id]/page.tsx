@@ -162,7 +162,7 @@ export default function ClientDetailPage() {
               </div>
                <div className="flex items-center">
                 <Hash className="mr-3 h-5 w-5 text-muted-foreground" />
-                <span>ID: {client.idNumber}</span>
+                <span>ID: {client.id}</span>
               </div>
               {client.passportNumber && (
                   <div className="flex items-center">

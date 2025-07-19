@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -18,7 +19,6 @@ export interface Payment {
 export interface Client {
   id: string;
   name: string;
-  idNumber: string;
   passportNumber?: string;
   mobile: string;
   occupation?: string;
