@@ -66,7 +66,7 @@ export default function DashboardLayout({
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <Landmark className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">Jilliane LoadBuddy</span>
+                  <span className="sr-only">LoanBuddy</span>
                 </Link>
                 {navItems.map((item) => {
                     if (item.adminOnly && user?.role !== 'admin') {

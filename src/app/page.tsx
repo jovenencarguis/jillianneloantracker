@@ -18,7 +18,7 @@ export default function SplashPage() {
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
       <div className="text-center">
         <h1 className="text-5xl font-headline font-bold text-primary animate-fade-in-down">
-          Jilliane LoadBuddy
+          LoanBuddy
         </h1>
         <p className="mt-2 text-lg text-muted-foreground animate-fade-in-up">
           Your friendly money lending tracker.

@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Jilliane LoadBuddy",
+  title: "LoanBuddy",
   description: "A simple and friendly money lending tracker.",
 };
 
