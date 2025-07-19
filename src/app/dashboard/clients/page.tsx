@@ -45,6 +45,7 @@ import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 const updateStoredClients = (clients: Client[]) => {
     if (typeof window !== 'undefined') {
@@ -76,6 +77,7 @@ export default function ClientsPage() {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     setClients(getStoredClients());
