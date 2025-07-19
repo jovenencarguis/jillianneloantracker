@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { PlusCircle, ShieldCheck, UserCog, Trash2, AlertTriangle, UserPlus, MoreVertical } from "lucide-react";
+import { PlusCircle, ShieldCheck, UserCog, Trash2, AlertTriangle, UserPlus, MoreVertical, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -44,6 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
 import { users as initialUsers } from "@/lib/data";
 import { AddUserForm } from "@/components/add-user-form";
+import { EditUserForm } from "@/components/edit-user-form";
 
 const updateStoredUsers = (users: User[]) => {
     if (typeof window !== 'undefined') {
@@ -56,7 +57,8 @@ const getStoredUsers = (): User[] => {
         const storedUsers = window.sessionStorage.getItem('all-users');
         if (storedUsers) {
             try {
-                return JSON.parse(storedUsers);
+                const parsed = JSON.parse(storedUsers);
+                 return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
             } catch (e) {
                 console.error("Failed to parse users from sessionStorage", e);
                 return initialUsers;
@@ -71,7 +73,9 @@ export default function AdminPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setEditUserModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -156,116 +160,143 @@ export default function AdminPage() {
     setUsers((prev) => [...prev, newUser]);
   }
 
+  const handleUserUpdated = (updatedUser: User) => {
+    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+    toast({
+      title: "User Updated",
+      description: `${updatedUser.name}'s details have been updated.`,
+    });
+    setUserToEdit(null);
+  };
+
+  const openEditModal = (userToEdit: User) => {
+    setUserToEdit(userToEdit);
+    setEditUserModalOpen(true);
+  };
+
   if (loading || user?.role !== "admin") {
     return <div>Loading or unauthorized...</div>;
   }
 
   return (
     <>
-    <AddUserForm 
-        isOpen={isAddUserModalOpen}
-        onOpenChange={setAddUserModalOpen}
-        onUserAdded={handleUserAdded}
-    />
-    <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="text-destructive"/> Are you sure?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                    This will permanently delete the user <strong>{userToDelete?.name}</strong>. This action cannot be undone.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteUser} className={buttonVariants({ variant: "destructive" })}>
-                    <Trash2 className="mr-2 h-4 w-4"/>
-                    Yes, delete user
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
+      <AddUserForm 
+          isOpen={isAddUserModalOpen}
+          onOpenChange={setAddUserModalOpen}
+          onUserAdded={handleUserAdded}
+      />
+      {userToEdit && (
+          <EditUserForm
+              isOpen={isEditUserModalOpen}
+              onOpenChange={setEditUserModalOpen}
+              user={userToEdit}
+              onUserUpdated={handleUserUpdated}
+          />
+      )}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="text-destructive"/> Are you sure?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This will permanently delete the user <strong>{userToDelete?.name}</strong>. This action cannot be undone.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteUser} className={buttonVariants({ variant: "destructive" })}>
+                      <Trash2 className="mr-2 h-4 w-4"/>
+                      Yes, delete user
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
       </AlertDialog>
-    <div className="space-y-4 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Admin Control Panel
-          </h2>
-          <p className="text-muted-foreground">
-            Manage users and application settings.
-          </p>
+      <div className="space-y-4 pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight font-headline">
+              Admin Control Panel
+            </h2>
+            <p className="text-muted-foreground">
+              Manage users and application settings.
+            </p>
+          </div>
+          <Button onClick={() => setAddUserModalOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" /> Add New User
+          </Button>
         </div>
-        <Button onClick={() => setAddUserModalOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" /> Add New User
-        </Button>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            View and manage user roles and access.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.name}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>
-                    {u.role === "admin" ? (
-                      <Badge><ShieldCheck className="mr-1 h-3 w-3" />Admin</Badge>
-                    ) : (
-                      <Badge variant="secondary"><UserCog className="mr-1 h-3 w-3" />User</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                         <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "admin")} disabled={u.role === 'admin'}>
-                            Make Admin
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "user")} disabled={u.role === 'user'}>
-                            Make User
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openDeleteDialog(u)}>
-                          <Trash2 className="mr-2 h-4 w-4"/>
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>
+              View and manage user roles and access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.name}</TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>
+                      {u.role === "admin" ? (
+                        <Badge><ShieldCheck className="mr-1 h-3 w-3" />Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary"><UserCog className="mr-1 h-3 w-3" />User</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => openEditModal(u)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "admin")} disabled={u.role === 'admin'}>
+                              Make Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "user")} disabled={u.role === 'user'}>
+                              Make User
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openDeleteDialog(u)}>
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }
