@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LinkIcon, PlusCircle, Trash2, AlertTriangle, Pencil } from "lucide-react";
+import { FileText, PlusCircle, Trash2, AlertTriangle, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -225,7 +225,7 @@ export default function ClientsPage() {
                             size="icon"
                             variant="ghost"
                           >
-                            <LinkIcon className="h-4 w-4" />
+                            <FileText className="h-4 w-4" />
                             <span className="sr-only">Toggle menu</span>
                           </Button>
                         </DropdownMenuTrigger>
