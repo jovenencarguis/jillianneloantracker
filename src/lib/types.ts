@@ -1,7 +1,9 @@
 export interface User {
   id: string;
   name: string;
+  username: string;
   email: string;
+  password?: string; // Should not be stored on client-side in a real app
   role: 'admin' | 'user';
 }
 

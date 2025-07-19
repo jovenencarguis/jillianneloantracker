@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Landmark } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
@@ -24,7 +25,7 @@ export default function LoginPage() {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const success = login(email);
+    const success = login(username, password);
 
     if (success) {
       toast({
@@ -36,7 +37,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid email. Please try again.",
+        description: "Invalid username or password. Please try again.",
       });
       setIsLoading(false);
     }
@@ -50,26 +51,38 @@ export default function LoginPage() {
                 <Landmark className="h-10 w-10 text-primary" />
             </div>
           <CardTitle className="text-3xl font-headline">Jilliane LoadBuddy</CardTitle>
-          <CardDescription>Enter your email to log in to your account</CardDescription>
+          <CardDescription>Enter your credentials to log in.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@loadbuddy.com"
+                id="username"
+                type="text"
+                placeholder="admin"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+             <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading || !username || !password}>
               {isLoading ? 'Logging In...' : 'Login'}
             </Button>
-            <p className="text-xs text-center text-muted-foreground">Use 'admin@loadbuddy.com' or 'user@loadbuddy.com'</p>
+            <p className="text-xs text-center text-muted-foreground">Use 'admin' or 'user' with any password.</p>
           </form>
         </CardContent>
       </Card>

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => boolean;
+  login: (username: string, password?: string) => boolean;
   logout: () => void;
   loading: boolean;
 }
@@ -34,11 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (email: string): boolean => {
-    const foundUser = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  const login = (username: string, password?: string): boolean => {
+    // In a real app, password should be hashed and compared on the server.
+    // For this mock app, we're just finding the user by username.
+    // Password can be any string.
+    const foundUser = mockUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
     if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('loadbuddy-user', JSON.stringify(foundUser));
+      const { password: _, ...userToStore } = foundUser;
+      setUser(userToStore);
+      localStorage.setItem('loadbuddy-user', JSON.stringify(userToStore));
       return true;
     }
     return false;
