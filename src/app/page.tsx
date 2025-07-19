@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Landmark } from 'lucide-react';
 
 export default function SplashPage() {
   const router = useRouter();
