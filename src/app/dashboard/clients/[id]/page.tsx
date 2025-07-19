@@ -33,42 +33,31 @@ import {
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
 
-// This is a temporary solution to share state between pages.
-// In a real app, this would be managed by a global state manager (like Redux, Zustand) or fetched from a database.
 const getClients = () => {
     if (typeof window !== 'undefined') {
         const storedClients = window.sessionStorage.getItem('all-clients');
         if (storedClients) {
-            return JSON.parse(storedClients);
+            try {
+                return JSON.parse(storedClients);
+            } catch (e) {
+                console.error("Failed to parse clients from sessionStorage", e);
+                return initialClients;
+            }
         }
     }
     return initialClients;
 };
 
-const useClients = () => {
-    const [clients, setClients] = useState<Client[]>(getClients());
-
-    useEffect(() => {
-        const handleStorageChange = () => {
-            setClients(getClients());
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
-    return clients;
-};
-
 
 export default function ClientDetailPage() {
   const params = useParams();
-  const allClients = useClients(); // Use the shared client list
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const foundClient = allClients.find((c) => c.id === id);
+    const allClients = getClients();
+    const foundClient = allClients.find((c: Client) => c.id === id);
     
     if (foundClient) {
       setClient(foundClient);
@@ -78,7 +67,7 @@ export default function ClientDetailPage() {
         setIsLoading(false);
     }, 500);
 
-  }, [params.id, allClients]);
+  }, [params.id]);
 
   if (isLoading) {
     return <div>Loading client details...</div>;
