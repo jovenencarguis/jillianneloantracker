@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,33 @@ import { clients as initialClients } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { cn } from "@/lib/utils";
 
+// This is a temporary solution to share state between pages.
+// In a real app, this would be managed by a global state manager (like Redux, Zustand) or fetched from a database.
+const updateStoredClients = (clients: Client[]) => {
+    if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('all-clients', JSON.stringify(clients));
+    }
+};
+
+const getStoredClients = () => {
+    if (typeof window !== 'undefined') {
+        const storedClients = window.sessionStorage.getItem('all-clients');
+        if (storedClients) {
+            return JSON.parse(storedClients);
+        }
+    }
+    return initialClients;
+};
+
+
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>(getStoredClients);
   const [isAddClientModalOpen, setAddClientModalOpen] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    updateStoredClients(clients);
+  }, [clients]);
 
   const handleAddClient = (newClient: Client) => {
     setClients((prevClients) => [newClient, ...prevClients]);
