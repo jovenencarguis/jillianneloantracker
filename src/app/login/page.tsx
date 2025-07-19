@@ -98,7 +98,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading || !username || !password}>
               {isLoading ? 'Logging In...' : 'Login'}
             </Button>
-            <p className="text-xs text-center text-muted-foreground">Use 'admin' or 'user' with any password.</p>
+            <p className="text-xs text-center text-muted-foreground">Use admin/admin123 or user/user123</p>
           </form>
         </CardContent>
       </Card>

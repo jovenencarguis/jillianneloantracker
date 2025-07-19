@@ -59,7 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refetchUsers]);
 
   const login = (username: string, password?: string): boolean => {
-    const foundUser = allUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
+    const foundUser = allUsers.find(
+      (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+    );
     if (foundUser) {
       const { password: _, ...userToStore } = foundUser;
       setUser(userToStore);

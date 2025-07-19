@@ -1,8 +1,9 @@
 import type { User, Client, RecentActivity, UpcomingPayment } from './types';
 
 export const users: User[] = [
-  { id: '1', name: 'Admin Jilliane', username: 'admin', email: 'admin@loadbuddy.com', password: 'password', role: 'admin' },
-  { id: '2', name: 'User One', username: 'user', email: 'user@loadbuddy.com', password: 'password', role: 'user' },
+  { id: '1', name: 'Admin Account', username: 'admin', email: 'admin@loadbuddy.com', password: 'admin123', role: 'admin' },
+  { id: '2', name: 'Joven', username: 'joven', email: 'joven@loadbuddy.com', password: 'admin123', role: 'admin' },
+  { id: '3', name: 'User Account', username: 'user', email: 'user@loadbuddy.com', password: 'user123', role: 'user' },
 ];
 
 export const clients: Client[] = [
