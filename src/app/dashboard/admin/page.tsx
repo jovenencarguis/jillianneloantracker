@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { FileText, ShieldCheck, UserCog } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PlusCircle, ShieldCheck, UserCog, Trash2, AlertTriangle, UserPlus, MoreVertical } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -26,15 +27,31 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
 import { users as mockUsers } from "@/lib/data";
+import { AddUserForm } from "@/components/add-user-form";
 
 export default function AdminPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>(mockUsers);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && user?.role !== "admin") {
@@ -42,11 +59,101 @@ export default function AdminPage() {
     }
   }, [user, loading, router]);
 
+  const handleRoleChange = (userId: string, newRole: "admin" | "user") => {
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser) return;
+    
+    // Prevent admin from demoting themselves if they are the only admin
+    const adminCount = users.filter(u => u.role === 'admin').length;
+    if (user?.id === userId && newRole === 'user' && adminCount <= 1) {
+        toast({
+            variant: "destructive",
+            title: "Action Forbidden",
+            description: "You cannot demote the only administrator.",
+        });
+        return;
+    }
+
+    setUsers(
+      users.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+    toast({
+        title: "Role Updated",
+        description: `${targetUser.name}'s role has been changed to ${newRole}.`,
+    });
+
+    // If admin demotes themselves, log them out to re-authenticate with new role
+    if (user?.id === userId && newRole === 'user') {
+      setTimeout(() => logout(), 1500);
+    }
+  };
+
+  const openDeleteDialog = (userToDelete: User) => {
+    if (user?.id === userToDelete.id) {
+         toast({
+            variant: "destructive",
+            title: "Action Forbidden",
+            description: "You cannot delete your own account.",
+        });
+        return;
+    }
+     // Prevent admin from deleting the only admin
+    const adminCount = users.filter(u => u.role === 'admin').length;
+    if (userToDelete.role === 'admin' && adminCount <= 1) {
+        toast({
+            variant: "destructive",
+            title: "Action Forbidden",
+            description: "You cannot delete the only administrator.",
+        });
+        return;
+    }
+    setUserToDelete(userToDelete);
+  }
+
+  const handleDeleteUser = () => {
+    if (!userToDelete) return;
+    setUsers(users.filter((u) => u.id !== userToDelete.id));
+    toast({
+        title: "User Deleted",
+        description: `User ${userToDelete.name} has been permanently removed.`,
+    });
+    setUserToDelete(null);
+  };
+
+  const handleUserAdded = (newUser: User) => {
+    setUsers((prev) => [...prev, newUser]);
+  }
+
   if (loading || user?.role !== "admin") {
     return <div>Loading or unauthorized...</div>;
   }
 
   return (
+    <>
+    <AddUserForm 
+        isOpen={isAddUserModalOpen}
+        onOpenChange={setAddUserModalOpen}
+        onUserAdded={handleUserAdded}
+    />
+    <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive"/> Are you sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently delete the user <strong>{userToDelete?.name}</strong>. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteUser} className={buttonVariants({ variant: "destructive" })}>
+                    <Trash2 className="mr-2 h-4 w-4"/>
+                    Yes, delete user
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <div className="space-y-4 pt-6">
       <div className="flex items-center justify-between">
         <div>
@@ -57,6 +164,9 @@ export default function AdminPage() {
             Manage users and application settings.
           </p>
         </div>
+        <Button onClick={() => setAddUserModalOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Add New User
+        </Button>
       </div>
       <Card>
         <CardHeader>
@@ -97,15 +207,21 @@ export default function AdminPage() {
                           size="icon"
                           variant="ghost"
                         >
-                          <FileText className="h-4 w-4" />
+                          <MoreVertical className="h-4 w-4" />
                           <span className="sr-only">Toggle menu</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Make Admin</DropdownMenuItem>
-                        <DropdownMenuItem>Make User</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                         <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "admin")} disabled={u.role === 'admin'}>
+                            Make Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleRoleChange(u.id, "user")} disabled={u.role === 'user'}>
+                            Make User
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openDeleteDialog(u)}>
+                          <Trash2 className="mr-2 h-4 w-4"/>
                           Delete User
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -118,5 +234,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
