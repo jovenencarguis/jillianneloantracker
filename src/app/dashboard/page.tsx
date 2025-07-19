@@ -152,10 +152,10 @@ export default function DashboardPage() {
                         </Avatar>
                          <div className="ml-4 space-y-1">
                             <p className="text-sm font-medium leading-none">{payment.clientName}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <div className="text-sm text-muted-foreground">
                                 Due: {new Date(payment.dueDate).toLocaleDateString()}
                                 {payment.isOverdue && <Badge variant="destructive" className="ml-2 text-xs">Overdue</Badge>}
-                            </p>
+                            </div>
                         </div>
                         <div className="ml-auto font-semibold">{formatCurrency(payment.amount)}</div>
                     </div>
