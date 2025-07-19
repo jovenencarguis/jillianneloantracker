@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, PlusCircle, Trash2, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -54,7 +55,12 @@ const getStoredClients = () => {
     if (typeof window !== 'undefined') {
         const storedClients = window.sessionStorage.getItem('all-clients');
         if (storedClients) {
-            return JSON.parse(storedClients);
+            try {
+                return JSON.parse(storedClients);
+            } catch (e) {
+                console.error("Failed to parse clients from sessionStorage", e);
+                return initialClients;
+            }
         }
     }
     return initialClients;
@@ -62,14 +68,20 @@ const getStoredClients = () => {
 
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(getStoredClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isAddClientModalOpen, setAddClientModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    updateStoredClients(clients);
+    setClients(getStoredClients());
+  }, []);
+
+  useEffect(() => {
+    if(clients.length > 0){
+        updateStoredClients(clients);
+    }
   }, [clients]);
 
   const handleAddClient = (newClient: Client) => {
@@ -125,7 +137,7 @@ export default function ClientsPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDeleteClient(clientToDelete!.id)} className={buttonVariants({ variant: "destructive" })}>
+                <AlertDialogAction onClick={() => clientToDelete && handleDeleteClient(clientToDelete.id)} className={buttonVariants({ variant: "destructive" })}>
                     <Trash2 className="mr-2 h-4 w-4"/>
                     Yes, delete client
                 </AlertDialogAction>
