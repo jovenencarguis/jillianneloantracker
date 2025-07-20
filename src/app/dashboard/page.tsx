@@ -2,10 +2,10 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { DollarSign, Users, PiggyBank, Scale, UserPlus, TrendingUp } from "lucide-react"
-import { clients as initialClients, recentActivities as initialRecentActivities, upcomingPayments as initialUpcomingPayments } from "@/lib/data"
+import { DollarSign, Users, PiggyBank, Scale, TrendingUp, Edit3, UserPlus, Trash2 } from "lucide-react"
+import { clients as initialClients, recentActivities as initialRecentActivities } from "@/lib/data"
 import { useState, useEffect, useMemo } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { Client, RecentActivity, UpcomingPayment } from "@/lib/types"
 
@@ -19,8 +19,6 @@ const getStoredClients = (): Client[] => {
             return initialClients;
         }
     }
-    // If we're on the client and there's nothing, it's an empty array.
-    // Let's not re-seed with initial data automatically.
     return [];
 };
 
@@ -38,18 +36,12 @@ const getStoredRecentActivities = (): RecentActivity[] => {
 }
 
 const getStoredUpcomingPayments = (): UpcomingPayment[] => {
-    if (typeof window === 'undefined') return initialUpcomingPayments;
-    const stored = sessionStorage.getItem('upcoming-payments');
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch (e) {
-            // No need to set here, let the derivation logic handle it.
-        }
-    }
-
+    if (typeof window === 'undefined') return [];
+    
     // Derive from clients if not available
     const clients = getStoredClients();
+    if (!clients || clients.length === 0) return [];
+
     const today = new Date();
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(today.getDate() + 7);
@@ -90,9 +82,18 @@ export default function DashboardPage() {
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
 
   useEffect(() => {
-    setClients(getStoredClients());
-    setRecentActivities(getStoredRecentActivities().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setUpcomingPayments(getStoredUpcomingPayments());
+    const handleStorageChange = () => {
+        setClients(getStoredClients());
+        setRecentActivities(getStoredRecentActivities().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setUpcomingPayments(getStoredUpcomingPayments());
+    };
+
+    handleStorageChange(); // Initial load
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
 
@@ -127,31 +128,22 @@ export default function DashboardPage() {
     return Math.floor(seconds) + "s ago";
   };
   
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = (type: RecentActivity['action']) => {
     switch (type) {
-      case 'new_client':
-        return <UserPlus className="h-4 w-4" />
-      case 'payment':
-        return <DollarSign className="h-4 w-4" />
-      case 'paid_off':
-        return <TrendingUp className="h-4 w-4" />
+      case 'Add Client':
+        return <UserPlus className="h-4 w-4" />;
+      case 'Add Payment':
+        return <DollarSign className="h-4 w-4" />;
+      case 'Paid Off':
+        return <TrendingUp className="h-4 w-4" />;
+      case 'Edit Borrower Info':
+        return <Edit3 className="h-4 w-4" />;
+      case 'Delete Borrower':
+        return <Trash2 className="h-4 w-4 text-destructive" />;
       default:
         return null;
     }
-  }
-
-  const getActivityDescription = (activity: typeof recentActivities[0]) => {
-     switch (activity.type) {
-      case 'new_client':
-        return `New loan of ${formatCurrency(activity.amount || 0)}`
-      case 'payment':
-        return `Made a payment of ${formatCurrency(activity.amount || 0)}`
-      case 'paid_off':
-        return 'Loan fully paid off'
-      default:
-        return '';
-    }
-  }
+  };
 
 
   return (
@@ -200,10 +192,10 @@ export default function DashboardPage() {
         </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader>
             <CardTitle className="font-headline">Recent Activity</CardTitle>
-            <CardDescription>Recent transactions from your clients.</CardDescription>
+            <CardDescription>A log of all important actions within the system.</CardDescription>
           </CardHeader>
           <CardContent>
              {recentActivities.length > 0 ? (
@@ -212,23 +204,29 @@ export default function DashboardPage() {
                         <div key={activity.id} className="flex items-center">
                             <Avatar className="h-9 w-9">
                                 <AvatarFallback className="bg-primary/10 text-primary">
-                                    {getActivityIcon(activity.type)}
+                                    {getActivityIcon(activity.action)}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">{activity.clientName}</p>
-                                <p className="text-sm text-muted-foreground">{getActivityDescription(activity)}</p>
+                                <p className="text-sm font-medium leading-none flex items-center gap-2">
+                                    {activity.action}
+                                    <span className="text-xs text-muted-foreground font-normal">by {activity.performedBy} ({activity.role})</span>
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    <span className="font-semibold">{activity.target}</span>
+                                    {activity.details ? ` - ${activity.details}` : ''}
+                                </p>
                             </div>
                             <div className="ml-auto font-medium text-muted-foreground text-xs">{timeSince(activity.date)}</div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="text-center text-muted-foreground h-24 flex items-center justify-center p-4">No recent activity yet. Once clients make loans or payments, you'll see updates here.</div>
+                <div className="text-center text-muted-foreground h-24 flex items-center justify-center p-4">No recent activity yet. Actions like payments, edits, or deletions will appear here.</div>
             )}
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="col-span-full lg:col-span-3">
           <CardHeader>
             <CardTitle className="font-headline">Upcoming Payments</CardTitle>
              <CardDescription>Payments due within the next 7 days.</CardDescription>
@@ -238,8 +236,7 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                     {upcomingPayments.map((payment) => (
                         <div key={payment.id} className="flex items-center">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://placehold.co/100x100.png`} alt={payment.clientName} data-ai-hint="profile person" />
+                             <Avatar className="h-9 w-9 border">
                                 <AvatarFallback>{payment.clientName.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="ml-4 space-y-1">
@@ -262,5 +259,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
-    

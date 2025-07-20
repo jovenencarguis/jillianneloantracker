@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { format, isValid, parse } from "date-fns"
 import { CalendarIcon, Loader2 } from "lucide-react"
+import { useAuth } from "@/context/auth-context"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -80,6 +81,8 @@ const getStoredRecentActivities = (): RecentActivity[] => {
 const updateStoredRecentActivities = (activities: RecentActivity[]) => {
     if (typeof window !== 'undefined') {
         sessionStorage.setItem('recent-activities', JSON.stringify(activities));
+        // Dispatch a storage event to notify other components like the dashboard
+        window.dispatchEvent(new Event('storage'));
     }
 };
 
@@ -88,6 +91,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
   const { toast } = useToast()
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
+  const { user } = useAuth()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -128,6 +132,10 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in to add a client." });
+        return;
+    }
     setIsSubmitting(true)
     
     // Simulate API call
@@ -150,17 +158,18 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     
     const newActivity: RecentActivity = {
         id: `ra${Date.now()}`,
-        type: 'new_client',
-        clientName: newClient.name,
+        action: 'Add Client',
+        performedBy: user.name,
+        role: user.role,
+        target: newClient.name,
+        details: `Loan of ${newClient.originalLoanAmount.toFixed(2)}`,
         date: new Date().toISOString(),
-        amount: newClient.originalLoanAmount,
     };
     const updatedActivities = [newActivity, ...getStoredRecentActivities()];
     updateStoredRecentActivities(updatedActivities);
 
 
     // In a real app, you'd save this to Firebase or your backend.
-    console.log("New client created:", newClient)
     onClientAdded(newClient)
 
     toast({

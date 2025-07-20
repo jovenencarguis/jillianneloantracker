@@ -35,12 +35,14 @@ export interface Client {
 
 export interface RecentActivity {
   id: string;
-  type: 'payment' | 'new_client' | 'paid_off';
-  clientName: string;
-  date: string;
-  amount?: number;
-  createdBy?: string;
+  action: 'Add Payment' | 'Add Client' | 'Paid Off' | 'Edit Borrower Info' | 'Delete Borrower';
+  performedBy: string;
+  role: 'admin' | 'user';
+  target: string; // The name of the client affected
+  details?: string;
+  date: string; // ISO string for timestamp
 }
+
 
 export interface UpcomingPayment {
     id: string;
@@ -49,5 +51,3 @@ export interface UpcomingPayment {
     amount: number;
     isOverdue: boolean;
 }
-
-    

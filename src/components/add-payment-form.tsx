@@ -67,7 +67,14 @@ const getStoredRecentActivities = (): RecentActivity[] => {
 const updateStoredRecentActivities = (activities: RecentActivity[]) => {
     if (typeof window !== 'undefined') {
         sessionStorage.setItem('recent-activities', JSON.stringify(activities));
+        // Dispatch a storage event to notify other components like the dashboard
+        window.dispatchEvent(new Event('storage'));
     }
+};
+
+const calculateInterest = (balance: number, monthlyRate: number) => {
+    const monthlyInterestDecimal = monthlyRate / 100;
+    return parseFloat((balance * monthlyInterestDecimal).toFixed(2));
 };
 
 export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }: AddPaymentFormProps) {
@@ -77,10 +84,6 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
 
-  const calculateInterest = (balance: number, monthlyRate: number) => {
-    const monthlyInterestDecimal = monthlyRate / 100;
-    return parseFloat((balance * monthlyInterestDecimal).toFixed(2));
-  };
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -146,16 +149,17 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
       ...client,
       remainingBalance: newRemainingBalance,
       payments: [...client.payments, newPayment],
-      status: isPaidOff ? 'Paid Off' : 'Active'
+      status: isPaidOff ? 'Paid Off' : (client.status === 'Overdue' ? 'Active' : client.status)
     }
 
     const newActivity: RecentActivity = {
         id: `ra${Date.now()}`,
-        type: isPaidOff ? 'paid_off' : 'payment',
-        clientName: client.name,
+        action: isPaidOff ? 'Paid Off' : 'Add Payment',
+        performedBy: user.name,
+        role: user.role,
+        target: client.name,
+        details: `Paid ${newPayment.totalPaid.toFixed(2)}`,
         date: new Date().toISOString(),
-        amount: newPayment.totalPaid,
-        createdBy: user.name,
     };
     const updatedActivities = [newActivity, ...getStoredRecentActivities()];
     updateStoredRecentActivities(updatedActivities);

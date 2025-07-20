@@ -40,8 +40,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Client } from "@/lib/types";
-import { clients as initialClients } from "@/lib/data";
+import type { Client, RecentActivity } from "@/lib/types";
+import { clients as initialClients, recentActivities as initialRecentActivities } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
 import { useAuth } from "@/context/auth-context";
@@ -57,17 +57,26 @@ const getStoredClients = (): Client[] => {
         const storedClients = window.sessionStorage.getItem('all-clients');
         if (storedClients) {
             try {
-                // This allows an empty array to be a valid state.
                 return JSON.parse(storedClients);
             } catch (e) {
                 console.error("Failed to parse clients from sessionStorage", e);
-                return initialClients; // Fallback on error
+                return initialClients;
             }
         }
     }
-    // If no clients in storage, seed with initial data for the first run.
-    updateStoredClients(initialClients);
     return initialClients;
+};
+
+const getStoredRecentActivities = (): RecentActivity[] => {
+    if (typeof window === 'undefined') return initialRecentActivities;
+    const stored = sessionStorage.getItem('recent-activities');
+    return stored ? JSON.parse(stored) : initialRecentActivities;
+}
+
+const updateStoredRecentActivities = (activities: RecentActivity[]) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
+    }
 };
 
 
@@ -86,27 +95,60 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => {
-    // only update storage if clients have been loaded/modified.
-    if(clients.length > 0 || sessionStorage.getItem('all-clients')) {
-        updateStoredClients(clients);
-    }
+    updateStoredClients(clients);
   }, [clients]);
 
   const handleAddClient = (newClient: Client) => {
     setClients((prevClients) => [newClient, ...prevClients]);
   };
 
-  const handleUpdateClient = (updatedClient: Client) => {
+  const handleUpdateClient = (updatedClient: Client, changes: string[]) => {
     setClients((prevClients) => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
     setClientToEdit(null);
+
+    // Log activity
+    if (user) {
+      const newActivity: RecentActivity = {
+        id: `ra${Date.now()}`,
+        action: 'Edit Borrower Info',
+        performedBy: user.name,
+        role: user.role,
+        target: updatedClient.name,
+        details: `Updated fields: ${changes.join(', ')}`,
+        date: new Date().toISOString(),
+      };
+      const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+      updateStoredRecentActivities(updatedActivities);
+    }
+    toast({
+        title: "Client Updated",
+        description: "Edits saved and logged to system history.",
+    });
   };
   
   const handleDeleteClient = (clientId: string) => {
-    const clientName = clients.find(c => c.id === clientId)?.name || "The client";
-    setClients((prevClients) => prevClients.filter((client) => client.id !== clientId));
+    const client = clients.find(c => c.id === clientId)
+    if (!client) return;
+    
+    setClients((prevClients) => prevClients.filter((c) => c.id !== clientId));
+
+    // Log activity
+     if (user) {
+      const newActivity: RecentActivity = {
+        id: `ra${Date.now()}`,
+        action: 'Delete Borrower',
+        performedBy: user.name,
+        role: user.role,
+        target: client.name,
+        date: new Date().toISOString(),
+      };
+      const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+      updateStoredRecentActivities(updatedActivities);
+    }
+
     toast({
         title: "Client Deleted",
-        description: `${clientName} has been permanently removed.`,
+        description: `${client.name} has been permanently removed.`,
     });
     setClientToDelete(null);
   };
@@ -143,12 +185,13 @@ export default function ClientsPage() {
         onOpenChange={setAddClientModalOpen}
         onClientAdded={handleAddClient}
       />
-      {clientToEdit && (
+      {clientToEdit && user && (
         <EditClientForm
             isOpen={isEditClientModalOpen}
             onOpenChange={setEditClientModalOpen}
             client={clientToEdit}
             onClientUpdated={handleUpdateClient}
+            currentUser={user}
         />
       )}
       <AlertDialog open={!!clientToDelete} onOpenChange={() => setClientToDelete(null)}>
@@ -172,7 +215,7 @@ export default function ClientsPage() {
       </AlertDialog>
 
       <div className="space-y-4 pt-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div>
             <h2 className="text-3xl font-bold tracking-tight font-headline">
               Client Profiles
@@ -182,7 +225,7 @@ export default function ClientsPage() {
             </p>
           </div>
           {user && (
-              <Button onClick={() => setAddClientModalOpen(true)}>
+              <Button onClick={() => setAddClientModalOpen(true)} className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
               </Button>
           )}
@@ -245,20 +288,24 @@ export default function ClientsPage() {
                           >
                             View Details
                           </DropdownMenuItem>
-                          {user?.role === 'admin' && (
+                          {user && (
                             <>
                               <DropdownMenuItem onSelect={() => openEditModal(client)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit Profile
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                onSelect={() => setClientToDelete(client)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Delete Client
-                              </DropdownMenuItem>
+                              {user.role === 'admin' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                    onSelect={() => setClientToDelete(client)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Delete Client
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </>
                           )}
                         </DropdownMenuContent>

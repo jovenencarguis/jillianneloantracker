@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription as FormDesc,
   FormField,
   FormItem,
   FormLabel,
@@ -42,7 +43,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import type { Client } from "@/lib/types"
+import type { Client, User } from "@/lib/types"
 
 const occupations = [
   "Programmer",
@@ -68,14 +69,17 @@ type EditClientFormProps = {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
   client: Client
-  onClientUpdated: (updatedClient: Client) => void
+  onClientUpdated: (updatedClient: Client, changes: string[]) => void
+  currentUser: User
 }
 
-export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }: EditClientFormProps) {
+export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated, currentUser }: EditClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
+
+  const isAdmin = currentUser.role === 'admin';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -114,8 +118,19 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // A real app would also need to recalculate remaining balance if the original loan amount changes.
-    // For simplicity, we assume this is a profile detail update.
+    // Determine what changed
+    const changes: string[] = [];
+    if (values.name !== client.name) changes.push("Name");
+    if (values.passportNumber !== (client.passportNumber || "")) changes.push("Passport Number");
+    if (values.mobile !== client.mobile) changes.push("Mobile");
+    if (values.occupation !== client.occupation) changes.push("Occupation");
+    if (values.yearsWorking !== client.yearsWorking) changes.push("Years Working");
+    if (isAdmin) {
+      if (values.amountBorrowed !== client.originalLoanAmount) changes.push("Amount Borrowed");
+      if (values.interestRate !== client.interestRate) changes.push("Interest Rate");
+      if (format(values.borrowedDate, 'yyyy-MM-dd') !== format(new Date(client.loanDate), 'yyyy-MM-dd')) changes.push("Loan Date");
+    }
+
     const updatedClient: Client = {
         ...client,
         name: values.name,
@@ -123,20 +138,13 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
         mobile: values.mobile,
         occupation: values.occupation,
         yearsWorking: values.yearsWorking,
-        originalLoanAmount: values.amountBorrowed,
-        interestRate: values.interestRate,
-        loanDate: values.borrowedDate.toISOString(),
+        originalLoanAmount: isAdmin ? values.amountBorrowed : client.originalLoanAmount,
+        interestRate: isAdmin ? values.interestRate : client.interestRate,
+        loanDate: isAdmin ? values.borrowedDate.toISOString() : client.loanDate,
     }
     
     // In a real app, you'd save this to Firebase or your backend.
-    console.log("Client updated:", updatedClient)
-    onClientUpdated(updatedClient)
-
-    toast({
-        title: "Client Updated Successfully!",
-        description: `${updatedClient.name}'s profile has been updated.`,
-        className: "bg-accent text-accent-foreground",
-    })
+    onClientUpdated(updatedClient, changes);
     
     setIsSubmitting(false)
     onOpenChange(false)
@@ -236,8 +244,9 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
                       <FormItem>
                         <FormLabel>Amount Borrowed</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="10000" {...field} />
+                          <Input type="number" placeholder="10000" {...field} disabled={!isAdmin} />
                         </FormControl>
+                         {!isAdmin && <FormDesc className="text-xs">Admin access required.</FormDesc>}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -249,8 +258,9 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
                         <FormItem>
                           <FormLabel>Interest Rate (%/month)</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.1" placeholder="10" {...field} />
+                            <Input type="number" step="0.1" placeholder="10" {...field} disabled={!isAdmin} />
                           </FormControl>
+                           {!isAdmin && <FormDesc className="text-xs">Admin access required.</FormDesc>}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -281,10 +291,11 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
                             "pr-10 transition-colors duration-300",
                              isDateHighlighted && "bg-green-100"
                           )}
+                          disabled={!isAdmin}
                         />
                       </FormControl>
                       <Popover>
-                        <PopoverTrigger asChild>
+                        <PopoverTrigger asChild disabled={!isAdmin}>
                            <Button
                             variant="ghost"
                             size="icon"
@@ -314,6 +325,7 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
                         </PopoverContent>
                       </Popover>
                     </div>
+                     {!isAdmin && <FormDesc className="text-xs">Admin access required.</FormDesc>}
                     <FormMessage />
                   </FormItem>
                 )}
