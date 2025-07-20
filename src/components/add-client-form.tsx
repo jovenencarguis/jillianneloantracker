@@ -266,9 +266,12 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                           placeholder="YYYY-MM-DD"
                           value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
                           onChange={(e) => {
-                            const parsedDate = parse(e.target.value, "yyyy-MM-dd", new Date());
-                            if (isValid(parsedDate)) {
-                              field.onChange(parsedDate);
+                            const dateString = e.target.value;
+                            if (dateString.length === 10) { // Basic check for "YYYY-MM-DD" length
+                                const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+                                if (isValid(parsedDate)) {
+                                  field.onChange(parsedDate);
+                                }
                             }
                           }}
                           className={cn(
