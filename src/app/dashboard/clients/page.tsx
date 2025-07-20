@@ -52,18 +52,21 @@ const updateStoredClients = (clients: Client[]) => {
     }
 };
 
-const getStoredClients = () => {
+const getStoredClients = (): Client[] => {
     if (typeof window !== 'undefined') {
         const storedClients = window.sessionStorage.getItem('all-clients');
         if (storedClients) {
             try {
+                // This allows an empty array to be a valid state.
                 return JSON.parse(storedClients);
             } catch (e) {
                 console.error("Failed to parse clients from sessionStorage", e);
-                return initialClients;
+                return initialClients; // Fallback on error
             }
         }
     }
+    // If no clients in storage, seed with initial data for the first run.
+    updateStoredClients(initialClients);
     return initialClients;
 };
 
@@ -83,7 +86,8 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => {
-    if(clients.length > 0){
+    // only update storage if clients have been loaded/modified.
+    if(clients.length > 0 || sessionStorage.getItem('all-clients')) {
         updateStoredClients(clients);
     }
   }, [clients]);

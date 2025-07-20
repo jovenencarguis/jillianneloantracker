@@ -56,14 +56,19 @@ const getStoredUsers = (): User[] => {
         const storedUsers = window.sessionStorage.getItem('all-users');
         if (storedUsers) {
             try {
-                const parsed = JSON.parse(storedUsers);
-                 return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+                // If storedUsers is an empty array string '[]', it's valid.
+                // It only falls back to initialUsers if parsing fails or storedUsers is null/undefined.
+                return JSON.parse(storedUsers);
             } catch (e) {
                 console.error("Failed to parse users from sessionStorage", e);
+                // Fallback only on error
                 return initialUsers;
             }
         }
     }
+    // Fallback if sessionStorage is not available or item doesn't exist.
+    // We can seed it here for the first run.
+    updateStoredUsers(initialUsers);
     return initialUsers;
 };
 
@@ -88,7 +93,9 @@ export default function AdminPage() {
   }, [user, loading]);
   
   useEffect(() => {
-    if(users.length > 0){
+    // We only update storage if users state is not the initial empty array on mount.
+    // This prevents overwriting storage with an empty array before it's loaded.
+    if (users.length > 0 || sessionStorage.getItem('all-users')) {
         updateStoredUsers(users);
         refetchUsers?.();
     }

@@ -39,6 +39,12 @@ import { clients as initialClients } from "@/lib/data";
 import { AddPaymentForm } from "@/components/add-payment-form";
 import { useAuth } from "@/context/auth-context";
 
+const updateStoredClients = (clients: Client[]) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('all-clients', JSON.stringify(clients));
+    }
+};
+
 const getClients = (): Client[] => {
     if (typeof window !== 'undefined') {
         const storedClients = window.sessionStorage.getItem('all-clients');
@@ -51,15 +57,10 @@ const getClients = (): Client[] => {
             }
         }
     }
+    // If no clients in storage, seed with initial data
+    updateStoredClients(initialClients);
     return initialClients;
 };
-
-const updateStoredClients = (clients: Client[]) => {
-    if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('all-clients', JSON.stringify(clients));
-    }
-};
-
 
 export default function ClientDetailPage() {
   const params = useParams();

@@ -12,20 +12,40 @@ import type { Client, RecentActivity, UpcomingPayment } from "@/lib/types"
 const getStoredClients = (): Client[] => {
     if (typeof window === 'undefined') return initialClients;
     const stored = sessionStorage.getItem('all-clients');
-    return stored ? JSON.parse(stored) : initialClients;
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            return initialClients;
+        }
+    }
+    sessionStorage.setItem('all-clients', JSON.stringify(initialClients));
+    return initialClients;
 };
 
 const getStoredRecentActivities = (): RecentActivity[] => {
     if (typeof window === 'undefined') return initialRecentActivities;
     const stored = sessionStorage.getItem('recent-activities');
-    return stored ? JSON.parse(stored) : initialRecentActivities;
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            return initialRecentActivities;
+        }
+    }
+    sessionStorage.setItem('recent-activities', JSON.stringify(initialRecentActivities));
+    return initialRecentActivities;
 }
 
 const getStoredUpcomingPayments = (): UpcomingPayment[] => {
     if (typeof window === 'undefined') return initialUpcomingPayments;
     const stored = sessionStorage.getItem('upcoming-payments');
     if (stored) {
-        return JSON.parse(stored);
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            // No need to set here, let the derivation logic handle it.
+        }
     }
 
     // Derive from clients if not available
@@ -34,7 +54,7 @@ const getStoredUpcomingPayments = (): UpcomingPayment[] => {
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(today.getDate() + 7);
 
-    return clients
+    const payments = clients
         .filter(c => c.status === 'Active' || c.status === 'Overdue')
         .map(c => {
             const monthlyInterestRate = c.interestRate / 100;
@@ -59,6 +79,9 @@ const getStoredUpcomingPayments = (): UpcomingPayment[] => {
         })
         .filter(p => new Date(p.dueDate) <= sevenDaysFromNow)
         .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    
+    sessionStorage.setItem('upcoming-payments', JSON.stringify(payments));
+    return payments;
 }
 
 export default function DashboardPage() {

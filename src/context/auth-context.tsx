@@ -21,14 +21,16 @@ const getStoredUsers = (): User[] => {
     const storedUsers = sessionStorage.getItem('all-users');
     if (storedUsers) {
         try {
-            const parsed = JSON.parse(storedUsers);
-            // Quick validation to ensure it's an array and not empty
-            return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+            // This allows an empty array to be a valid, persisted state.
+            return JSON.parse(storedUsers);
         } catch (e) {
             console.error("Failed to parse users from sessionStorage", e);
+            // Fallback to default if parsing fails.
             return initialUsers;
         }
     }
+    // If no users are in storage (e.g., first visit), seed with initial data.
+    sessionStorage.setItem('all-users', JSON.stringify(initialUsers));
     return initialUsers;
 };
 
@@ -38,13 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const refetchUsers = useCallback(() => {
-    // This function can be called to ensure the latest users are loaded into session storage if needed,
-    // but the primary source of truth for login will be direct from storage.
-    const users = getStoredUsers();
-    // Ensure initial users are in storage if nothing else is.
-    if (!sessionStorage.getItem('all-users')) {
-        sessionStorage.setItem('all-users', JSON.stringify(users));
-    }
+    // This function can be called to ensure the latest users are loaded.
+    // The main purpose is to ensure session storage has data on first load.
+    getStoredUsers();
   }, []);
 
   useEffect(() => {
