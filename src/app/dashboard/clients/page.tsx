@@ -168,7 +168,7 @@ export default function ClientsPage() {
       </AlertDialog>
 
       <div className="space-y-4 pt-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight font-headline">
               Client Profiles
@@ -177,9 +177,11 @@ export default function ClientsPage() {
               Manage your borrowers and their loans.
             </p>
           </div>
-          <Button onClick={() => setAddClientModalOpen(true)} className="w-full md:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
-          </Button>
+          {user && (
+              <Button onClick={() => setAddClientModalOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
+              </Button>
+          )}
         </div>
         <Card>
           <CardHeader>
