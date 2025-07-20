@@ -26,7 +26,7 @@ export interface Client {
   occupation?: string;
   yearsWorking?: number;
   originalLoanAmount: number;
-  interestRate: number; // Annual rate as a percentage, e.g., 10 for 10%
+  interestRate: number; // Monthly rate as a percentage, e.g., 10 for 10%
   loanDate: string;
   payments: Payment[];
   remainingBalance: number;

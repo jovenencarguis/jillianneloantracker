@@ -37,7 +37,7 @@ const getStoredUpcomingPayments = (): UpcomingPayment[] => {
     return clients
         .filter(c => c.status === 'Active' || c.status === 'Overdue')
         .map(c => {
-            const monthlyInterestRate = (c.interestRate / 12) / 100;
+            const monthlyInterestRate = c.interestRate / 100;
             const interestAmount = c.remainingBalance * monthlyInterestRate;
             // Simplified: assumes a minimum payment of interest + some capital part
             const expectedAmount = interestAmount * 1.1; // Placeholder logic

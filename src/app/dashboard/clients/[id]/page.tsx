@@ -189,7 +189,7 @@ export default function ClientDetailPage() {
               )}
                <div className="flex items-center">
                 <BadgePercent className="mr-3 h-5 w-5 text-muted-foreground" />
-                <span>Interest Rate: {client.interestRate / 12}% / month</span>
+                <span>Interest Rate: {client.interestRate}% / month</span>
               </div>
               <div className="flex items-center">
                 <Calendar className="mr-3 h-5 w-5 text-muted-foreground" />

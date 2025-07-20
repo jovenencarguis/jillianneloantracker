@@ -61,6 +61,7 @@ const formSchema = z.object({
   occupation: z.string({ required_error: "Occupation is required." }),
   yearsWorking: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   amountBorrowed: z.coerce.number().min(1, { message: "Amount must be greater than 0." }),
+  interestRate: z.coerce.number().min(0, "Interest rate cannot be negative.").max(100, "Interest rate seems too high."),
   borrowedDate: z.date({ required_error: "A borrowing date is required." }),
 })
 
@@ -96,6 +97,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
       mobile: "",
       yearsWorking: 1,
       amountBorrowed: 0,
+      interestRate: 10, // Default to 10%
     },
   })
 
@@ -115,10 +117,12 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
         mobile: "",
         yearsWorking: 1,
         amountBorrowed: 0,
+        interestRate: 10,
       });
       setDateInput("");
     } else {
        form.setValue("borrowedDate", new Date());
+       setDateInput(format(new Date(), "yyyy-MM-dd"));
     }
   }, [isOpen, form]);
 
@@ -137,7 +141,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
         occupation: values.occupation,
         yearsWorking: values.yearsWorking,
         originalLoanAmount: values.amountBorrowed,
-        interestRate: 120, // 10% monthly
+        interestRate: values.interestRate, // Store monthly rate
         loanDate: values.borrowedDate.toISOString(),
         payments: [],
         remainingBalance: values.amountBorrowed,
@@ -269,13 +273,19 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                       </FormItem>
                     )}
                   />
-                  <FormItem>
-                        <FormLabel>Interest Rate (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" value="10" readOnly disabled className="font-medium"/>
-                        </FormControl>
-                        <FormMessage />
-                  </FormItem>
+                  <FormField
+                      control={form.control}
+                      name="interestRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Interest Rate (%/month)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" placeholder="10" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                  />
               </div>
               <FormField
                 control={form.control}
@@ -322,6 +332,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                             onSelect={(date) => {
                                 if (date) {
                                   field.onChange(date);
+                                  setDateInput(format(date, "yyyy-MM-dd"));
                                   setIsDateHighlighted(true);
                                   setTimeout(() => setIsDateHighlighted(false), 1500);
                                 }

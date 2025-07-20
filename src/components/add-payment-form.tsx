@@ -77,10 +77,9 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
 
-  const calculateInterest = (balance: number) => {
-    // Interest is 10% per month
-    const monthlyInterestRate = (client.interestRate / 12) / 100;
-    return parseFloat((balance * monthlyInterestRate).toFixed(2));
+  const calculateInterest = (balance: number, monthlyRate: number) => {
+    const monthlyInterestDecimal = monthlyRate / 100;
+    return parseFloat((balance * monthlyInterestDecimal).toFixed(2));
   };
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -108,7 +107,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
       form.reset({
         paymentDate: today,
         capitalPaid: 0,
-        interestPaid: calculateInterest(client.remainingBalance),
+        interestPaid: calculateInterest(client.remainingBalance, client.interestRate),
         notes: "",
       });
       setDateInput(format(today, "yyyy-MM-dd"))
@@ -230,6 +229,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                             onSelect={(date) => {
                                 if (date) {
                                   field.onChange(date);
+                                  setDateInput(format(date, "yyyy-MM-dd"));
                                   setIsDateHighlighted(true);
                                   setTimeout(() => setIsDateHighlighted(false), 1500);
                                 }
