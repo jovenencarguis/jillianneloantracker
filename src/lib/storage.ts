@@ -5,12 +5,26 @@ import { users as initialUsers, clients as initialClients, recentActivities as i
 // --- Data Initialization ---
 export const initializeData = () => {
     if (typeof window === 'undefined') return;
-    if (sessionStorage.getItem('data-initialized')) return;
 
+    // Use a flag to see if we've *ever* initialized data in this session
+    if (sessionStorage.getItem('data-initialized')) {
+        // If we have, ensure that empty arrays are respected and not overwritten
+        if (!sessionStorage.getItem('all-users')) {
+            sessionStorage.setItem('all-users', '[]');
+        }
+        if (!sessionStorage.getItem('all-clients')) {
+            sessionStorage.setItem('all-clients', '[]');
+        }
+        if (!sessionStorage.getItem('recent-activities')) {
+            sessionStorage.setItem('recent-activities', '[]');
+        }
+        return;
+    };
+    
+    // First time initialization for the session
     sessionStorage.setItem('all-users', JSON.stringify(initialUsers));
     sessionStorage.setItem('all-clients', JSON.stringify(initialClients));
     sessionStorage.setItem('recent-activities', JSON.stringify(initialRecentActivities));
-    
     sessionStorage.setItem('data-initialized', 'true');
 };
 
@@ -36,7 +50,7 @@ export const updateStoredData = (key: 'users' | 'clients' | 'activities', data: 
     if (typeof window !== 'undefined') {
         const storageKey = key === 'activities' ? 'recent-activities' : `all-${key}`;
         sessionStorage.setItem(storageKey, JSON.stringify(data));
-        window.dispatchEvent(new Event('storage-updated'));
+        // No longer dispatching event, state is managed in context
     }
 };
 
@@ -56,10 +70,10 @@ export const getStoredRecentActivities = (): RecentActivity[] => {
 
 
 // --- Derived Data Getters ---
-export const getStoredUpcomingPayments = (): UpcomingPayment[] => {
+// Pass clients directly to avoid reading from storage again
+export const getStoredUpcomingPayments = (clients: Client[]): UpcomingPayment[] => {
     if (typeof window === 'undefined') return [];
     
-    const clients = getStoredClients();
     if (!clients || clients.length === 0) return [];
 
     const today = new Date();
@@ -91,6 +105,5 @@ export const getStoredUpcomingPayments = (): UpcomingPayment[] => {
         .filter(p => new Date(p.dueDate) <= sevenDaysFromNow)
         .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
     
-    sessionStorage.setItem('upcoming-payments', JSON.stringify(payments));
     return payments;
 };

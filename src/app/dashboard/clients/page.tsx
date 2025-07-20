@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, PlusCircle, Trash2, AlertTriangle, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -44,30 +44,17 @@ import type { Client, RecentActivity } from "@/lib/types";
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
 import { useAuth } from "@/context/auth-context";
-import { updateStoredData, getStoredClients, getStoredRecentActivities } from "@/lib/storage";
+import { updateStoredData } from "@/lib/storage";
 
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const { user, clients, setClients, activities, setActivities } = useAuth();
   const [isAddClientModalOpen, setAddClientModalOpen] = useState(false);
   const [isEditClientModalOpen, setEditClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const refreshData = () => {
-      setClients(getStoredClients());
-    };
-    refreshData();
-
-    window.addEventListener('storage-updated', refreshData);
-    return () => {
-        window.removeEventListener('storage-updated', refreshData);
-    };
-  }, []);
 
   const handleAddClient = (newClient: Client) => {
     const updatedClients = [newClient, ...clients];
@@ -92,7 +79,8 @@ export default function ClientsPage() {
         details: `Updated fields: ${changes.join(', ')}`,
         date: new Date().toISOString(),
       };
-      const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+      const updatedActivities = [newActivity, ...activities];
+      setActivities(updatedActivities);
       updateStoredData('activities', updatedActivities);
     }
     toast({
@@ -107,6 +95,8 @@ export default function ClientsPage() {
     
     const updatedClients = clients.filter((c) => c.id !== clientId);
     setClients(updatedClients);
+    updateStoredData('clients', updatedClients);
+
 
     // Log activity
      if (user) {
@@ -118,11 +108,10 @@ export default function ClientsPage() {
         target: client.name,
         date: new Date().toISOString(),
       };
-      const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+      const updatedActivities = [newActivity, ...activities];
+      setActivities(updatedActivities);
       updateStoredData('activities', updatedActivities);
-    } else {
-      updateStoredData('clients', updatedClients);
-    }
+    } 
 
     toast({
         title: "Client Deleted",

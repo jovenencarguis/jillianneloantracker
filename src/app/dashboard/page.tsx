@@ -3,33 +3,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { DollarSign, Users, PiggyBank, Scale, TrendingUp, Edit3, UserPlus, Trash2 } from "lucide-react"
-import { useState, useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { Client, RecentActivity, UpcomingPayment } from "@/lib/types"
-import { getStoredClients, getStoredRecentActivities, getStoredUpcomingPayments } from "@/lib/storage";
+import { useAuth } from "@/context/auth-context"
 
 export default function DashboardPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-        setClients(getStoredClients());
-        setRecentActivities(getStoredRecentActivities().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setUpcomingPayments(getStoredUpcomingPayments());
-    };
-
-    handleStorageChange(); // Initial load
-
-    window.addEventListener('storage-updated', handleStorageChange);
-    return () => {
-        window.removeEventListener('storage-updated', handleStorageChange);
-    };
-  }, []);
-
-
+  const { clients, activities, upcomingPayments } = useAuth();
+  
   const stats = useMemo(() => {
     const totalClients = clients.length
     const totalLoanAmount = clients.reduce((sum, client) => sum + client.originalLoanAmount, 0)
@@ -131,9 +113,9 @@ export default function DashboardPage() {
             <CardDescription>A log of all important actions within the system.</CardDescription>
           </CardHeader>
           <CardContent>
-             {recentActivities.length > 0 ? (
+             {activities.length > 0 ? (
                 <div className="space-y-6">
-                    {recentActivities.slice(0, 10).map((activity) => (
+                    {activities.slice(0, 10).map((activity) => (
                         <div key={activity.id} className="flex items-center">
                             <Avatar className="h-9 w-9">
                                 <AvatarFallback className="bg-primary/10 text-primary">

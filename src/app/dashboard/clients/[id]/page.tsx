@@ -37,46 +37,30 @@ import {
 import type { Client } from "@/lib/types";
 import { AddPaymentForm } from "@/components/add-payment-form";
 import { useAuth } from "@/context/auth-context";
-import { getStoredClients, updateStoredData } from "@/lib/storage";
+import { updateStoredData } from "@/lib/storage";
 
 export default function ClientDetailPage() {
   const params = useParams();
-  const { user } = useAuth();
+  const { user, clients, setClients } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddPaymentModalOpen, setAddPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    
-    const refreshData = () => {
-        const allClients = getStoredClients();
-        const foundClient = allClients.find((c: Client) => c.id === id);
-        if (foundClient) {
-          setClient(foundClient);
-        }
-    };
-    
-    refreshData();
-    
-    // Simulate network delay
-    setTimeout(() => {
-        setIsLoading(false);
-    }, 500);
-
-    window.addEventListener('storage-updated', refreshData);
-    return () => {
-        window.removeEventListener('storage-updated', refreshData);
-    };
-
-  }, [params.id]);
+    const foundClient = clients.find((c: Client) => c.id === id);
+    if (foundClient) {
+      setClient(foundClient);
+    }
+    setIsLoading(false);
+  }, [params.id, clients]);
 
   const handlePaymentAdded = (updatedClient: Client) => {
     setClient(updatedClient);
-    const allClients = getStoredClients();
-    const updatedClients = allClients.map((c: Client) => 
+    const updatedClients = clients.map((c: Client) => 
         c.id === updatedClient.id ? updatedClient : c
     );
+    setClients(updatedClients);
     updateStoredData('clients', updatedClients);
   };
 
@@ -86,7 +70,8 @@ export default function ClientDetailPage() {
   }
 
   if (!client) {
-    notFound();
+    // Let the notFound() be triggered by the parent component's loading state handling
+    return <div>Client not found.</div>;
   }
   
   const getStatusBadge = (status: Client['status']) => {

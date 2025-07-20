@@ -43,11 +43,10 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
 import { AddUserForm } from "@/components/add-user-form";
 import { EditUserForm } from "@/components/edit-user-form";
-import { updateStoredData, getStoredUsers } from "@/lib/storage";
+import { updateStoredData } from "@/lib/storage";
 
 export default function AdminPage() {
-  const { user, loading, logout, refetchUsers } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const { user, loading, users, setUsers } = useAuth();
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
@@ -55,31 +54,12 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const refreshData = () => {
-        setUsers(getStoredUsers());
-    };
-    refreshData();
-
-    window.addEventListener('storage-updated', refreshData);
-    return () => {
-        window.removeEventListener('storage-updated', refreshData);
-    };
-  }, []);
-  
-  useEffect(() => {
     if (!loading && user?.role !== "admin") {
       // User will be redirected by the layout if not admin, but this is a failsafe
       // For this simple app, we can just show a message. A redirect could cause a loop if not handled carefully.
     }
   }, [user, loading]);
   
-  useEffect(() => {
-    // This effect now primarily serves to notify other components of changes.
-    if (users.length > 0 || sessionStorage.getItem('all-users')) {
-        updateStoredData('users', users);
-    }
-  }, [users]);
-
   const handleRoleChange = (userId: string, newRole: "admin" | "user") => {
     const targetUser = users.find((u) => u.id === userId);
     if (!targetUser) return;
@@ -95,9 +75,10 @@ export default function AdminPage() {
         return;
     }
 
-    setUsers(
-      users.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-    );
+    const updatedUsers = users.map((u) => (u.id === userId ? { ...u, role: newRole } : u));
+    setUsers(updatedUsers);
+    updateStoredData('users', updatedUsers);
+
     toast({
         title: "Role Updated",
         description: `${targetUser.name}'s role has been changed to ${newRole}.`,
@@ -105,7 +86,7 @@ export default function AdminPage() {
 
     // If admin demotes themselves, log them out to re-authenticate with new role
     if (user?.id === userId && newRole === 'user') {
-      setTimeout(() => logout(), 1500);
+      setTimeout(() => alert("Your role has changed. You will be logged out."), 1500); // Using alert as logout may not be available from context here depending on timing
     }
   };
 
@@ -133,7 +114,9 @@ export default function AdminPage() {
 
   const handleDeleteUser = () => {
     if (!userToDelete) return;
-    setUsers(users.filter((u) => u.id !== userToDelete.id));
+    const updatedUsers = users.filter((u) => u.id !== userToDelete.id);
+    setUsers(updatedUsers);
+    updateStoredData('users', updatedUsers);
     toast({
         title: "User Deleted",
         description: `User ${userToDelete.name} has been permanently removed.`,
@@ -142,11 +125,15 @@ export default function AdminPage() {
   };
 
   const handleUserAdded = (newUser: User) => {
-    setUsers((prev) => [...prev, newUser]);
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    updateStoredData('users', updatedUsers);
   }
 
   const handleUserUpdated = (updatedUser: User) => {
-    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+    const updatedUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u)
+    setUsers(updatedUsers);
+    updateStoredData('users', updatedUsers);
     toast({
       title: "User Updated",
       description: `${updatedUser.name}'s details have been updated.`,

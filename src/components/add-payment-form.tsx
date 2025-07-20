@@ -38,7 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Client, Payment, RecentActivity } from "@/lib/types"
-import { getStoredRecentActivities, updateStoredData } from "@/lib/storage";
+import { updateStoredData } from "@/lib/storage";
 
 
 const formSchema = z.object({
@@ -66,7 +66,7 @@ const calculateInterest = (balance: number, monthlyRate: number) => {
 export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }: AddPaymentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
-  const { user } = useAuth();
+  const { user, activities, setActivities } = useAuth();
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
 
@@ -147,7 +147,8 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
         details: `Paid ${newPayment.totalPaid.toFixed(2)}`,
         date: new Date().toISOString(),
     };
-    const updatedActivities = [newActivity, ...getStoredRecentActivities()];
+    const updatedActivities = [newActivity, ...activities];
+    setActivities(updatedActivities);
     updateStoredData('activities', updatedActivities);
 
     onPaymentAdded(updatedClient);
@@ -188,9 +189,11 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                            onChange={(e) => {
                             const dateString = e.target.value;
                             setDateInput(dateString); // Update visual state immediately
-                            const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
-                            if (isValid(parsedDate)) {
-                              field.onChange(parsedDate);
+                            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                              const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+                              if (isValid(parsedDate)) {
+                                field.onChange(parsedDate);
+                              }
                             }
                           }}
                           className={cn(
