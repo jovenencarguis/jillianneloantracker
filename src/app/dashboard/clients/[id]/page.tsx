@@ -32,6 +32,7 @@ import {
   Smartphone,
   Briefcase,
   CalendarClock,
+  MessageSquare,
 } from "lucide-react";
 import type { Client } from "@/lib/types";
 import { clients as initialClients } from "@/lib/data";
@@ -142,7 +143,7 @@ export default function ClientDetailPage() {
               Detailed loan information and payment history.
             </p>
           </div>
-          {user?.role === 'admin' && (
+          {user && (
             <Button onClick={() => setAddPaymentModalOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Payment
             </Button>
@@ -249,6 +250,8 @@ export default function ClientDetailPage() {
                   <TableHead className="text-right">Capital Paid</TableHead>
                   <TableHead className="text-right">Interest Paid</TableHead>
                   <TableHead className="text-right">Total Paid</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Added By</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -267,11 +270,22 @@ export default function ClientDetailPage() {
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(payment.totalPaid)}
                       </TableCell>
+                       <TableCell>
+                        {payment.notes && (
+                           <div className="flex items-start gap-2 text-muted-foreground text-xs">
+                             <MessageSquare className="h-4 w-4 mt-0.5 shrink-0" /> 
+                             <span>{payment.notes}</span>
+                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {payment.createdBy}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
+                    <TableCell colSpan={6} className="text-center h-24">
                       No payments have been made yet.
                     </TableCell>
                   </TableRow>

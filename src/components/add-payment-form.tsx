@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { format, isValid, parse } from "date-fns"
 import { CalendarIcon, Loader2 } from "lucide-react"
+import { useAuth } from "@/context/auth-context"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -72,6 +73,7 @@ const updateStoredRecentActivities = (activities: RecentActivity[]) => {
 export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }: AddPaymentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth();
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
   const [dateInput, setDateInput] = useState("")
 
@@ -91,24 +93,25 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     },
   })
 
-  const paymentDateValue = form.watch("paymentDate")
+  // Sync dateInput with form value when it changes
+  const paymentDateValue = form.watch("paymentDate");
   useEffect(() => {
     if (paymentDateValue && isValid(paymentDateValue)) {
-      setDateInput(format(paymentDateValue, "yyyy-MM-dd"))
+      setDateInput(format(paymentDateValue, "yyyy-MM-dd"));
     }
-  }, [paymentDateValue])
-
+  }, [paymentDateValue]);
 
   useEffect(() => {
     if (isOpen) {
+      const today = new Date();
       // Reset form with default values when modal opens, especially the calculated interest
       form.reset({
-        paymentDate: new Date(),
+        paymentDate: today,
         capitalPaid: 0,
         interestPaid: calculateInterest(client.remainingBalance),
         notes: "",
       });
-      setDateInput(format(new Date(), "yyyy-MM-dd"))
+      setDateInput(format(today, "yyyy-MM-dd"))
     }
   }, [isOpen, client, form]);
 
@@ -117,12 +120,24 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to add a payment.",
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
     const newPayment: Payment = {
         id: `p${Date.now()}`,
         date: values.paymentDate.toISOString(),
         capitalPaid: values.capitalPaid,
         interestPaid: values.interestPaid,
         totalPaid: values.capitalPaid + values.interestPaid,
+        notes: values.notes,
+        createdBy: user.name, // or user.id
     }
     
     const newRemainingBalance = client.remainingBalance - values.capitalPaid;
@@ -141,6 +156,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
         clientName: client.name,
         date: new Date().toISOString(),
         amount: newPayment.totalPaid,
+        createdBy: user.name,
     };
     const updatedActivities = [newActivity, ...getStoredRecentActivities()];
     updateStoredRecentActivities(updatedActivities);
@@ -182,8 +198,8 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                           value={dateInput}
                            onChange={(e) => {
                             const dateString = e.target.value;
-                            setDateInput(dateString);
-                            if (dateString.length === 10) { 
+                            setDateInput(dateString); // Update visual state immediately
+                            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) { 
                                 const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
                                 if (isValid(parsedDate)) {
                                   field.onChange(parsedDate);

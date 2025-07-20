@@ -14,6 +14,8 @@ export interface Payment {
   capitalPaid: number;
   interestPaid: number;
   totalPaid: number;
+  notes?: string;
+  createdBy?: string;
 }
 
 export interface Client {
@@ -37,6 +39,7 @@ export interface RecentActivity {
   clientName: string;
   date: string;
   amount?: number;
+  createdBy?: string;
 }
 
 export interface UpcomingPayment {
