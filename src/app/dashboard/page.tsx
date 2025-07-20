@@ -3,78 +3,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { DollarSign, Users, PiggyBank, Scale, TrendingUp, Edit3, UserPlus, Trash2 } from "lucide-react"
-import { clients as initialClients, recentActivities as initialRecentActivities } from "@/lib/data"
 import { useState, useEffect, useMemo } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { Client, RecentActivity, UpcomingPayment } from "@/lib/types"
-
-const getStoredClients = (): Client[] => {
-    if (typeof window === 'undefined') return initialClients;
-    const stored = sessionStorage.getItem('all-clients');
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch (e) {
-            return initialClients;
-        }
-    }
-    return [];
-};
-
-const getStoredRecentActivities = (): RecentActivity[] => {
-    if (typeof window === 'undefined') return initialRecentActivities;
-    const stored = sessionStorage.getItem('recent-activities');
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch (e) {
-            return initialRecentActivities;
-        }
-    }
-    return [];
-}
-
-const getStoredUpcomingPayments = (): UpcomingPayment[] => {
-    if (typeof window === 'undefined') return [];
-    
-    // Derive from clients if not available
-    const clients = getStoredClients();
-    if (!clients || clients.length === 0) return [];
-
-    const today = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(today.getDate() + 7);
-
-    const payments = clients
-        .filter(c => c.status === 'Active' || c.status === 'Overdue')
-        .map(c => {
-            const monthlyInterestRate = c.interestRate / 100;
-            const interestAmount = c.remainingBalance * monthlyInterestRate;
-            // Simplified: assumes a minimum payment of interest + some capital part
-            const expectedAmount = interestAmount * 1.1; // Placeholder logic
-            
-            const lastPaymentDate = c.payments.length > 0 
-                ? new Date(c.payments.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date)
-                : new Date(c.loanDate);
-
-            const dueDate = new Date(lastPaymentDate);
-            dueDate.setMonth(dueDate.getMonth() + 1);
-
-            return {
-                id: `up-${c.id}`,
-                clientName: c.name,
-                dueDate: dueDate.toISOString(),
-                amount: expectedAmount,
-                isOverdue: dueDate < today,
-            }
-        })
-        .filter(p => new Date(p.dueDate) <= sevenDaysFromNow)
-        .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    
-    sessionStorage.setItem('upcoming-payments', JSON.stringify(payments));
-    return payments;
-}
+import { getStoredClients, getStoredRecentActivities, getStoredUpcomingPayments } from "@/lib/storage";
 
 export default function DashboardPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -90,9 +23,9 @@ export default function DashboardPage() {
 
     handleStorageChange(); // Initial load
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage-updated', handleStorageChange);
     return () => {
-        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('storage-updated', handleStorageChange);
     };
   }, []);
 

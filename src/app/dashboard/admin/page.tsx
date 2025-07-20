@@ -41,36 +41,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
-import { users as initialUsers } from "@/lib/data";
 import { AddUserForm } from "@/components/add-user-form";
 import { EditUserForm } from "@/components/edit-user-form";
-
-const updateStoredUsers = (users: User[]) => {
-    if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('all-users', JSON.stringify(users));
-    }
-};
-
-const getStoredUsers = (): User[] => {
-    if (typeof window !== 'undefined') {
-        const storedUsers = window.sessionStorage.getItem('all-users');
-        if (storedUsers) {
-            try {
-                // If storedUsers is an empty array string '[]', it's valid.
-                // It only falls back to initialUsers if parsing fails or storedUsers is null/undefined.
-                return JSON.parse(storedUsers);
-            } catch (e) {
-                console.error("Failed to parse users from sessionStorage", e);
-                // Fallback only on error
-                return initialUsers;
-            }
-        }
-    }
-    // Fallback if sessionStorage is not available or item doesn't exist.
-    // We can seed it here for the first run.
-    updateStoredUsers(initialUsers);
-    return initialUsers;
-};
+import { updateStoredData, getStoredUsers } from "@/lib/storage";
 
 export default function AdminPage() {
   const { user, loading, logout, refetchUsers } = useAuth();
@@ -82,7 +55,15 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setUsers(getStoredUsers());
+    const refreshData = () => {
+        setUsers(getStoredUsers());
+    };
+    refreshData();
+
+    window.addEventListener('storage-updated', refreshData);
+    return () => {
+        window.removeEventListener('storage-updated', refreshData);
+    };
   }, []);
   
   useEffect(() => {
@@ -93,13 +74,11 @@ export default function AdminPage() {
   }, [user, loading]);
   
   useEffect(() => {
-    // We only update storage if users state is not the initial empty array on mount.
-    // This prevents overwriting storage with an empty array before it's loaded.
+    // This effect now primarily serves to notify other components of changes.
     if (users.length > 0 || sessionStorage.getItem('all-users')) {
-        updateStoredUsers(users);
-        refetchUsers?.();
+        updateStoredData('users', users);
     }
-  }, [users, refetchUsers]);
+  }, [users]);
 
   const handleRoleChange = (userId: string, newRole: "admin" | "user") => {
     const targetUser = users.find((u) => u.id === userId);

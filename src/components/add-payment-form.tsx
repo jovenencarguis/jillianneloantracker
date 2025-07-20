@@ -38,7 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Client, Payment, RecentActivity } from "@/lib/types"
-import { recentActivities as initialRecentActivities } from "@/lib/data"
+import { getStoredRecentActivities, updateStoredData } from "@/lib/storage";
 
 
 const formSchema = z.object({
@@ -57,20 +57,6 @@ type AddPaymentFormProps = {
   client: Client
   onPaymentAdded: (updatedClient: Client) => void
 }
-
-const getStoredRecentActivities = (): RecentActivity[] => {
-    if (typeof window === 'undefined') return initialRecentActivities;
-    const stored = sessionStorage.getItem('recent-activities');
-    return stored ? JSON.parse(stored) : initialRecentActivities;
-}
-
-const updateStoredRecentActivities = (activities: RecentActivity[]) => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
-        // Dispatch a storage event to notify other components like the dashboard
-        window.dispatchEvent(new Event('storage'));
-    }
-};
 
 const calculateInterest = (balance: number, monthlyRate: number) => {
     const monthlyInterestDecimal = monthlyRate / 100;
@@ -162,7 +148,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
         date: new Date().toISOString(),
     };
     const updatedActivities = [newActivity, ...getStoredRecentActivities()];
-    updateStoredRecentActivities(updatedActivities);
+    updateStoredData('activities', updatedActivities);
 
     onPaymentAdded(updatedClient);
 
@@ -202,11 +188,9 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                            onChange={(e) => {
                             const dateString = e.target.value;
                             setDateInput(dateString); // Update visual state immediately
-                            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) { 
-                                const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
-                                if (isValid(parsedDate)) {
-                                  field.onChange(parsedDate);
-                                }
+                            const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+                            if (isValid(parsedDate)) {
+                              field.onChange(parsedDate);
                             }
                           }}
                           className={cn(

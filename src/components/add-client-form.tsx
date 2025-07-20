@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Client, RecentActivity } from "@/lib/types"
-import { recentActivities as initialRecentActivities } from "@/lib/data"
+import { getStoredRecentActivities, updateStoredData } from "@/lib/storage";
 
 const occupations = [
   "Programmer",
@@ -71,20 +71,6 @@ type AddClientFormProps = {
   onOpenChange: (isOpen: boolean) => void
   onClientAdded: (newClient: Client) => void
 }
-
-const getStoredRecentActivities = (): RecentActivity[] => {
-    if (typeof window === 'undefined') return initialRecentActivities;
-    const stored = sessionStorage.getItem('recent-activities');
-    return stored ? JSON.parse(stored) : initialRecentActivities;
-}
-
-const updateStoredRecentActivities = (activities: RecentActivity[]) => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
-        // Dispatch a storage event to notify other components like the dashboard
-        window.dispatchEvent(new Event('storage'));
-    }
-};
 
 export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -166,7 +152,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
         date: new Date().toISOString(),
     };
     const updatedActivities = [newActivity, ...getStoredRecentActivities()];
-    updateStoredRecentActivities(updatedActivities);
+    updateStoredData('activities', updatedActivities);
 
 
     // In a real app, you'd save this to Firebase or your backend.
@@ -310,11 +296,9 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                           onChange={(e) => {
                             const dateString = e.target.value;
                             setDateInput(dateString); // Update visual state immediately
-                            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) { 
-                                const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
-                                if (isValid(parsedDate)) {
-                                  field.onChange(parsedDate);
-                                }
+                            const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+                            if (isValid(parsedDate)) {
+                              field.onChange(parsedDate);
                             }
                           }}
                           className={cn(

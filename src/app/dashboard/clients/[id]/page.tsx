@@ -35,32 +35,9 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { Client } from "@/lib/types";
-import { clients as initialClients } from "@/lib/data";
 import { AddPaymentForm } from "@/components/add-payment-form";
 import { useAuth } from "@/context/auth-context";
-
-const updateStoredClients = (clients: Client[]) => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.setItem('all-clients', JSON.stringify(clients));
-    }
-};
-
-const getClients = (): Client[] => {
-    if (typeof window !== 'undefined') {
-        const storedClients = window.sessionStorage.getItem('all-clients');
-        if (storedClients) {
-            try {
-                return JSON.parse(storedClients);
-            } catch (e) {
-                console.error("Failed to parse clients from sessionStorage", e);
-                return initialClients;
-            }
-        }
-    }
-    // If no clients in storage, seed with initial data
-    updateStoredClients(initialClients);
-    return initialClients;
-};
+import { getStoredClients, updateStoredData } from "@/lib/storage";
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -71,26 +48,36 @@ export default function ClientDetailPage() {
 
   useEffect(() => {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const allClients = getClients();
-    const foundClient = allClients.find((c: Client) => c.id === id);
     
-    if (foundClient) {
-      setClient(foundClient);
-    }
+    const refreshData = () => {
+        const allClients = getStoredClients();
+        const foundClient = allClients.find((c: Client) => c.id === id);
+        if (foundClient) {
+          setClient(foundClient);
+        }
+    };
+    
+    refreshData();
+    
     // Simulate network delay
     setTimeout(() => {
         setIsLoading(false);
     }, 500);
 
+    window.addEventListener('storage-updated', refreshData);
+    return () => {
+        window.removeEventListener('storage-updated', refreshData);
+    };
+
   }, [params.id]);
 
   const handlePaymentAdded = (updatedClient: Client) => {
     setClient(updatedClient);
-    const allClients = getClients();
+    const allClients = getStoredClients();
     const updatedClients = allClients.map((c: Client) => 
         c.id === updatedClient.id ? updatedClient : c
     );
-    updateStoredClients(updatedClients);
+    updateStoredData('clients', updatedClients);
   };
 
 

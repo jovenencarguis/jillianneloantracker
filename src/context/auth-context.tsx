@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { User } from '@/lib/types';
-import { users as initialUsers } from '@/lib/data';
+import { getStoredUsers, initializeData } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -16,24 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getStoredUsers = (): User[] => {
-    if (typeof window === 'undefined') return initialUsers;
-    const storedUsers = sessionStorage.getItem('all-users');
-    if (storedUsers) {
-        try {
-            // This allows an empty array to be a valid, persisted state.
-            return JSON.parse(storedUsers);
-        } catch (e) {
-            console.error("Failed to parse users from sessionStorage", e);
-            // Fallback to default if parsing fails.
-            return initialUsers;
-        }
-    }
-    // If no users are in storage (e.g., first visit), seed with initial data.
-    sessionStorage.setItem('all-users', JSON.stringify(initialUsers));
-    return initialUsers;
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refetchUsers = useCallback(() => {
     // This function can be called to ensure the latest users are loaded.
     // The main purpose is to ensure session storage has data on first load.
-    getStoredUsers();
+    initializeData();
   }, []);
 
   useEffect(() => {

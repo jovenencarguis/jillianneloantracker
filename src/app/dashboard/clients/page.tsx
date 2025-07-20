@@ -45,39 +45,7 @@ import { clients as initialClients, recentActivities as initialRecentActivities 
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
 import { useAuth } from "@/context/auth-context";
-
-const updateStoredClients = (clients: Client[]) => {
-    if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('all-clients', JSON.stringify(clients));
-    }
-};
-
-const getStoredClients = (): Client[] => {
-    if (typeof window !== 'undefined') {
-        const storedClients = window.sessionStorage.getItem('all-clients');
-        if (storedClients) {
-            try {
-                return JSON.parse(storedClients);
-            } catch (e) {
-                console.error("Failed to parse clients from sessionStorage", e);
-                return initialClients;
-            }
-        }
-    }
-    return initialClients;
-};
-
-const getStoredRecentActivities = (): RecentActivity[] => {
-    if (typeof window === 'undefined') return initialRecentActivities;
-    const stored = sessionStorage.getItem('recent-activities');
-    return stored ? JSON.parse(stored) : initialRecentActivities;
-}
-
-const updateStoredRecentActivities = (activities: RecentActivity[]) => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.setItem('recent-activities', JSON.stringify(activities));
-    }
-};
+import { updateStoredData, getStoredClients, getStoredRecentActivities } from "@/lib/storage";
 
 
 export default function ClientsPage() {
@@ -91,19 +59,26 @@ export default function ClientsPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    setClients(getStoredClients());
+    const refreshData = () => {
+      setClients(getStoredClients());
+    };
+    refreshData();
+
+    window.addEventListener('storage-updated', refreshData);
+    return () => {
+        window.removeEventListener('storage-updated', refreshData);
+    };
   }, []);
 
-  useEffect(() => {
-    updateStoredClients(clients);
-  }, [clients]);
-
   const handleAddClient = (newClient: Client) => {
-    setClients((prevClients) => [newClient, ...prevClients]);
+    const updatedClients = [newClient, ...clients];
+    setClients(updatedClients);
+    updateStoredData('clients', updatedClients);
   };
 
   const handleUpdateClient = (updatedClient: Client, changes: string[]) => {
-    setClients((prevClients) => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
+    const updatedClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
+    setClients(updatedClients);
     setClientToEdit(null);
 
     // Log activity
@@ -118,7 +93,7 @@ export default function ClientsPage() {
         date: new Date().toISOString(),
       };
       const updatedActivities = [newActivity, ...getStoredRecentActivities()];
-      updateStoredRecentActivities(updatedActivities);
+      updateStoredData('activities', updatedActivities);
     }
     toast({
         title: "Client Updated",
@@ -130,7 +105,8 @@ export default function ClientsPage() {
     const client = clients.find(c => c.id === clientId)
     if (!client) return;
     
-    setClients((prevClients) => prevClients.filter((c) => c.id !== clientId));
+    const updatedClients = clients.filter((c) => c.id !== clientId);
+    setClients(updatedClients);
 
     // Log activity
      if (user) {
@@ -143,7 +119,9 @@ export default function ClientsPage() {
         date: new Date().toISOString(),
       };
       const updatedActivities = [newActivity, ...getStoredRecentActivities()];
-      updateStoredRecentActivities(updatedActivities);
+      updateStoredData('activities', updatedActivities);
+    } else {
+      updateStoredData('clients', updatedClients);
     }
 
     toast({
