@@ -293,9 +293,11 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                             mode="single"
                             selected={field.value}
                             onSelect={(date) => {
-                                field.onChange(date);
-                                setIsDateHighlighted(true);
-                                setTimeout(() => setIsDateHighlighted(false), 1500);
+                                if (date) {
+                                  field.onChange(date);
+                                  setIsDateHighlighted(true);
+                                  setTimeout(() => setIsDateHighlighted(false), 1500);
+                                }
                             }}
                             disabled={(date) =>
                               date > new Date() || date < new Date("1900-01-01")
