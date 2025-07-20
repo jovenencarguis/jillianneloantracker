@@ -41,7 +41,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, RecentActivity } from "@/lib/types";
-import { clients as initialClients, recentActivities as initialRecentActivities } from "@/lib/data";
 import { AddClientForm } from "@/components/add-client-form";
 import { EditClientForm } from "@/components/edit-client-form";
 import { useAuth } from "@/context/auth-context";
@@ -79,6 +78,7 @@ export default function ClientsPage() {
   const handleUpdateClient = (updatedClient: Client, changes: string[]) => {
     const updatedClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
     setClients(updatedClients);
+    updateStoredData('clients', updatedClients);
     setClientToEdit(null);
 
     // Log activity
@@ -193,7 +193,7 @@ export default function ClientsPage() {
       </AlertDialog>
 
       <div className="space-y-4 pt-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+        <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight font-headline">
               Client Profiles
@@ -203,7 +203,7 @@ export default function ClientsPage() {
             </p>
           </div>
           {user && (
-              <Button onClick={() => setAddClientModalOpen(true)} className="w-full md:w-auto">
+              <Button onClick={() => setAddClientModalOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
               </Button>
           )}
