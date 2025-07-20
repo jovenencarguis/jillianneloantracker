@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { format } from "date-fns"
+import { format, isValid, parse } from "date-fns"
 import { CalendarIcon, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -72,6 +72,7 @@ const updateStoredRecentActivities = (activities: RecentActivity[]) => {
 export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }: AddPaymentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+  const [isDateHighlighted, setIsDateHighlighted] = useState(false)
 
   const calculateInterest = (balance: number) => {
     // Interest is 10% per month
@@ -164,35 +165,49 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date Paid</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date > new Date()}
-                          initialFocus
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          placeholder="YYYY-MM-DD"
+                          value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                          onChange={(e) => {
+                            const parsedDate = parse(e.target.value, "yyyy-MM-dd", new Date());
+                            if (isValid(parsedDate)) {
+                              field.onChange(parsedDate);
+                            }
+                          }}
+                          className={cn(
+                            "pr-10 transition-colors duration-300",
+                             isDateHighlighted && "bg-green-100"
+                          )}
                         />
-                      </PopoverContent>
-                    </Popover>
+                      </FormControl>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                           <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            aria-label="Pick a date"
+                           >
+                            <CalendarIcon className="h-4 w-4" />
+                           </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => {
+                                field.onChange(date);
+                                setIsDateHighlighted(true);
+                                setTimeout(() => setIsDateHighlighted(false), 1500);
+                            }}
+                            disabled={(date) => date > new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
