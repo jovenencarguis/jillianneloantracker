@@ -74,6 +74,7 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
+  const [dateInput, setDateInput] = useState("")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -89,7 +90,7 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
   })
 
   useEffect(() => {
-    if (client) {
+    if (client && isOpen) {
         form.reset({
             name: client.name,
             passportNumber: client.passportNumber || "",
@@ -99,6 +100,7 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
             amountBorrowed: client.originalLoanAmount,
             borrowedDate: new Date(client.loanDate),
         })
+        setDateInput(format(new Date(client.loanDate), "yyyy-MM-dd"))
     }
   }, [client, form, isOpen])
 
@@ -254,10 +256,11 @@ export function EditClientForm({ isOpen, onOpenChange, client, onClientUpdated }
                       <FormControl>
                         <Input
                           placeholder="YYYY-MM-DD"
-                          value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                          value={dateInput}
                            onChange={(e) => {
                             const dateString = e.target.value;
-                            if (dateString && dateString.length === 10) { // Basic check for "YYYY-MM-DD" length
+                            setDateInput(dateString);
+                            if (dateString.length === 10) { 
                                 const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
                                 if (isValid(parsedDate)) {
                                   field.onChange(parsedDate);

@@ -86,6 +86,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
+  const [dateInput, setDateInput] = useState("")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,6 +99,14 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
       borrowedDate: new Date(),
     },
   })
+
+  // Sync dateInput with form value when it changes
+  const borrowedDateValue = form.watch("borrowedDate")
+  useEffect(() => {
+    if (borrowedDateValue && isValid(borrowedDateValue)) {
+      setDateInput(format(borrowedDateValue, "yyyy-MM-dd"))
+    }
+  }, [borrowedDateValue])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
@@ -144,10 +153,17 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     setIsSubmitting(false)
     onOpenChange(false)
     form.reset()
+    setDateInput("")
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            form.reset();
+            setDateInput("");
+        }
+        onOpenChange(open);
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">Add New Client</DialogTitle>
@@ -264,10 +280,11 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                       <FormControl>
                         <Input
                           placeholder="YYYY-MM-DD"
-                          value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                          value={dateInput}
                           onChange={(e) => {
                             const dateString = e.target.value;
-                            if (dateString.length === 10) { // Basic check for "YYYY-MM-DD" length
+                            setDateInput(dateString); // Update visual state immediately
+                            if (dateString.length === 10) { 
                                 const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
                                 if (isValid(parsedDate)) {
                                   field.onChange(parsedDate);

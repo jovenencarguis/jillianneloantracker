@@ -73,6 +73,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [isDateHighlighted, setIsDateHighlighted] = useState(false)
+  const [dateInput, setDateInput] = useState("")
 
   const calculateInterest = (balance: number) => {
     // Interest is 10% per month
@@ -90,6 +91,14 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
     },
   })
 
+  const paymentDateValue = form.watch("paymentDate")
+  useEffect(() => {
+    if (paymentDateValue && isValid(paymentDateValue)) {
+      setDateInput(format(paymentDateValue, "yyyy-MM-dd"))
+    }
+  }, [paymentDateValue])
+
+
   useEffect(() => {
     if (isOpen) {
       // Reset form with default values when modal opens, especially the calculated interest
@@ -99,6 +108,7 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
         interestPaid: calculateInterest(client.remainingBalance),
         notes: "",
       });
+      setDateInput(format(new Date(), "yyyy-MM-dd"))
     }
   }, [isOpen, client, form]);
 
@@ -169,10 +179,11 @@ export function AddPaymentForm({ isOpen, onOpenChange, client, onPaymentAdded }:
                       <FormControl>
                         <Input
                           placeholder="YYYY-MM-DD"
-                          value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                          value={dateInput}
                            onChange={(e) => {
                             const dateString = e.target.value;
-                            if (dateString.length === 10) { // Basic check for "YYYY-MM-DD" length
+                            setDateInput(dateString);
+                            if (dateString.length === 10) { 
                                 const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
                                 if (isValid(parsedDate)) {
                                   field.onChange(parsedDate);
