@@ -19,8 +19,9 @@ const getStoredClients = (): Client[] => {
             return initialClients;
         }
     }
-    sessionStorage.setItem('all-clients', JSON.stringify(initialClients));
-    return initialClients;
+    // If we're on the client and there's nothing, it's an empty array.
+    // Let's not re-seed with initial data automatically.
+    return [];
 };
 
 const getStoredRecentActivities = (): RecentActivity[] => {
@@ -33,8 +34,7 @@ const getStoredRecentActivities = (): RecentActivity[] => {
             return initialRecentActivities;
         }
     }
-    sessionStorage.setItem('recent-activities', JSON.stringify(initialRecentActivities));
-    return initialRecentActivities;
+    return [];
 }
 
 const getStoredUpcomingPayments = (): UpcomingPayment[] => {
@@ -224,7 +224,7 @@ export default function DashboardPage() {
                     ))}
                 </div>
             ) : (
-                <div className="text-center text-muted-foreground h-24 flex items-center justify-center">No activity yet.</div>
+                <div className="text-center text-muted-foreground h-24 flex items-center justify-center p-4">No recent activity yet. Once clients make loans or payments, you'll see updates here.</div>
             )}
           </CardContent>
         </Card>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                     ))}
                 </div>
             ) : (
-                <div className="text-center text-muted-foreground h-24 flex items-center justify-center">No payments due soon.</div>
+                <div className="text-center text-muted-foreground h-24 flex items-center justify-center p-4">No payments due soon. You’re all caught up!</div>
             )}
           </CardContent>
         </Card>
@@ -262,3 +262,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+    
