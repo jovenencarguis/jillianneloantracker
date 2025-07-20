@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -96,7 +96,6 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
       mobile: "",
       yearsWorking: 1,
       amountBorrowed: 0,
-      borrowedDate: new Date(),
     },
   })
 
@@ -107,6 +106,22 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
       setDateInput(format(borrowedDateValue, "yyyy-MM-dd"))
     }
   }, [borrowedDateValue])
+
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset({
+        name: "",
+        passportNumber: "",
+        mobile: "",
+        yearsWorking: 1,
+        amountBorrowed: 0,
+      });
+      setDateInput("");
+    } else {
+       form.setValue("borrowedDate", new Date());
+    }
+  }, [isOpen, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
@@ -152,18 +167,10 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
     
     setIsSubmitting(false)
     onOpenChange(false)
-    form.reset()
-    setDateInput("")
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) {
-            form.reset();
-            setDateInput("");
-        }
-        onOpenChange(open);
-    }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">Add New Client</DialogTitle>
@@ -284,7 +291,7 @@ export function AddClientForm({ isOpen, onOpenChange, onClientAdded }: AddClient
                           onChange={(e) => {
                             const dateString = e.target.value;
                             setDateInput(dateString); // Update visual state immediately
-                            if (dateString.length === 10) { 
+                            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) { 
                                 const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
                                 if (isValid(parsedDate)) {
                                   field.onChange(parsedDate);
